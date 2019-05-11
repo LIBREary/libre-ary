@@ -1,0 +1,13 @@
+[
+
+	{"level": "critical",
+	 "frequency": "1h",
+	 "locations": [ "s3", "drive", "local"]
+	},
+	{"level": "importantish",
+	 "frequency": "1d",
+	 "locations": [ "s3", "local"]
+	},
+
+
+]
