@@ -2,11 +2,13 @@
 
 	{"level": "critical",
 	 "frequency": "1h",
-	 "locations": [ "s3", "drive", "local"]
+	 "locations": [ "s3", "drive", "local"],
+	 "nsaved": "2",
 	},
 	{"level": "importantish",
 	 "frequency": "1d",
-	 "locations": [ "s3", "local"]
+	 "locations": [ "s3", "local"],
+	 "nsaved": "1",
 	},
 
 
