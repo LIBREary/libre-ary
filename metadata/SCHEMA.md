@@ -12,6 +12,12 @@ Fields: INT id, TEXT path, TEXT level, TEXT name, TEXT checksum
 Table name: levels
 Fields: INT id, TEXT name, TEXT frequency, TEXT adapters, INT copies
 
+### Table 3: Entries per resource
+
+Each copy of a resource will get an entry in this table
+
+Table name: copies
+Fields: INT copy_id, INT resource_id, TEXT adapter, TEXT locator, TEXT checksum
 
 Eventually, we will need to work out how we're going to back up the metadata db across different places
 
