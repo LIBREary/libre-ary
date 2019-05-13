@@ -15,4 +15,22 @@ class LocalAdapter(BaseAdapter):
 	"""
 
 	def __init__(self, config):
+		metadata_db = config['metadata'].get("db_file")
 		pass
+
+	def store(r_id):
+		pass
+
+	def retrieve(r_id):
+		pass
+
+	def update(r_id, updated):
+		pass
+
+
+if __name__ == '__main__':
+	config = {
+		"metadata" {
+			"db_file": "../metadata/md_index.db",
+		}
+	}
