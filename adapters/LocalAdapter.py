@@ -1,3 +1,5 @@
+import sqlite3
+
 from BaseAdapter import BaseAdapter
 
 class LocalAdapter(BaseAdapter):
@@ -16,7 +18,8 @@ class LocalAdapter(BaseAdapter):
 
 	def __init__(self, config):
 		metadata_db = config['metadata'].get("db_file")
-		pass
+		db_conn = sqlite3.connect("metadata_db")
+		cursor = conn.cursor()
 
 	def store(r_id):
 		pass
@@ -27,10 +30,20 @@ class LocalAdapter(BaseAdapter):
 	def update(r_id, updated):
 		pass
 
+	def load_metadata(r_id):
+		pass
+
 
 if __name__ == '__main__':
 	config = {
-		"metadata" {
+		"metadata":{
 			"db_file": "../metadata/md_index.db",
-		}
+		},
+
+		"adapters": {
+			"local":{
+				"storageDir": "~/Desktop/librelocal",
+			}
+		},
 	}
+	la = LocalAdapter(config)
