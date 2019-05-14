@@ -69,7 +69,7 @@ class LocalAdapter(BaseAdapter):
                        [r_id, adapter_type, new_location, sha1Hashed, self.adapter_id])
 
     def retrieve(r_id):
-        copy_info = self.cursor.execute("select * from copies where resource_id=? and adapter_id=? limit 1", r_id, self.adapter_id)[0]
+        copy_info = self.cursor.execute("select * from copies where resource_id=? and adapter_id=? limit 1", (r_id, self.adapter_id))[0]
         expected_hash = load_metadata(r_id)[0][4]
         copy_path =  copy_info[3]
         real_hash = copy_info[4]
@@ -85,8 +85,16 @@ class LocalAdapter(BaseAdapter):
     def update(r_id, updated):
         pass
 
-    def delete():
-    	pass
+    def delete(r_id):
+    	copy_info = self.cursor.execute("select * from copies where resource_id=? and adapter_id=? limit 1", (r_id, self.adapter_id))[0]
+        expected_hash = load_metadata(r_id)[0][4]
+        copy_path =  copy_info[3]
+
+        os.remove(copy_path)
+
+        self.cursor.execute("delete from copies where copy_id=?", [copy_info[0]])
+
+
 
     def load_metadata(r_id):
         return self.cursor.execute("select * from resources where id={}".format(r_id))
