@@ -24,19 +24,20 @@ class Ingester:
         while True:
             if os.path.isfile(new_location):
                 nloc = new_location.split("_")
-                print(nloc)
                 new_location = "{}_{}".format(nloc[0], i)
                 i += 1
             else:
                 copyfile(file, new_location)
                 break
 
+        dropbox_path = new_location.split("/")[-1]
+
         levels = ",".join([str(l) for l in levels])
 
         # Ingest to db
 
         self.cursor.execute("insert into resources values (?, ?, ?, ?,?)", 
-            (None, filename, filename, levels, checksum))
+            (None, filename, dropbox_path, levels, checksum))
 
         self.conn.commit()
 
