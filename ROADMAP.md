@@ -30,3 +30,8 @@ This is the roadmap for the libre-ary project. There are a number of fronts of d
 		- User config (auth, personal info)
 		- Object config (criticality levels, etc)
 		- Metadata config
+
+
+## Local Adapter transfer tool
+
+ - reindex local adapter locators.

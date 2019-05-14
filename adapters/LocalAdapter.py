@@ -30,6 +30,7 @@ class LocalAdapter(BaseAdapter):
         self.storage_dir = config["adapter"]["storage_dir"]
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.adapter_type = "local"
+        self.ret_dir = config["options"]["output_dir"]
 
     def store(self, r_id):
         file_metadata = self.load_metadata(r_id)[0]
@@ -72,13 +73,13 @@ class LocalAdapter(BaseAdapter):
 
     def retrieve(self, r_id):
         copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_id=? limit 1",
+            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
         expected_hash = self.load_metadata(r_id)[0][4]
         copy_path = copy_info[3]
         real_hash = copy_info[4]
 
-        new_location = "{}/{}".format(self.dropbox_dir, r_id)
+        new_location = "{}/{}".format(self.ret_dir, r_id)
 
         if real_hash == expected_hash:
             copyfile(copy_path, new_location)
@@ -90,9 +91,9 @@ class LocalAdapter(BaseAdapter):
 
     def delete(self, r_id):
         copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_id=? limit 1",
+            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
-        expected_hash = load_metadata(r_id)[0][4]
+        expected_hash = self.load_metadata(r_id)[0][4]
         copy_path = copy_info[3]
 
         os.remove(copy_path)
@@ -115,8 +116,9 @@ if __name__ == '__main__':
             "adapter_identifier": "local1"
         },
         "options": {
-            "dropbox_dir": "dropbox"
+            "dropbox_dir": "dropbox",
+            "output_dir": "retrieval"
         }
     }
     la = LocalAdapter(config)
-    la.store("1")
+    la.delete("1")
