@@ -33,7 +33,7 @@ class BaseAdapter:
         pass
 
     def delete(resource_id):
-    	"""
+        """
 		delete a resource
     	"""
-    	pass
+        pass
