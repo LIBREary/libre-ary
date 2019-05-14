@@ -31,3 +31,9 @@ class BaseAdapter:
 		Overwrite the remote resource specified with what's passed into :param updated.
 		"""
         pass
+
+    def delete(resource_id):
+    	"""
+		delete a resource
+    	"""
+    	pass
