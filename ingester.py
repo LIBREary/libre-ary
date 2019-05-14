@@ -36,7 +36,7 @@ class Ingester:
         # Ingest to db
 
         self.cursor.execute("insert into resources values (?, ?, ?, ?,?)", 
-            (None, filename, new_location, levels, checksum))
+            (None, filename, filename, levels, checksum))
 
         self.conn.commit()
 

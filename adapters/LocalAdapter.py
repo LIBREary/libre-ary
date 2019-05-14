@@ -58,8 +58,6 @@ class LocalAdapter(BaseAdapter):
             exit(0)
 
         if sha1Hashed == checksum:
-            print(current_location)
-            print(new_location)
             copyfile(current_location, new_location)
         else:
             print("Checksum Mismatch")
@@ -85,6 +83,8 @@ class LocalAdapter(BaseAdapter):
             copyfile(copy_path, new_location)
         else:
             print("Checksum Mismatch")
+            
+        return new_location
 
     def update(self, r_id, updated):
         pass
@@ -121,4 +121,4 @@ if __name__ == '__main__':
         }
     }
     la = LocalAdapter(config)
-    la.delete("1")
+    la.retrieve("16")
