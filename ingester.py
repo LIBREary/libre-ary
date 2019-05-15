@@ -49,7 +49,21 @@ class Ingester:
         return self.cursor.execute("select * from resources").fetchall()
 
     def delete_resource(self, r_id):
-        pass
+        resource_info = self.cursor.execute("select * from resources where id=?", (r_id,))
+        canonical_path = "{}/{}".format(self.dropbox_dir, resource_info[2])
+        canonical_checksum =  resource_info[4]
+
+        sha1Hash = hashlib.sha1(open(canonical_path,"rb").read())
+        checksum = sha1Hash.hexdigest()
+
+        if checksum == canonical_checksum:
+            os.remove(canonical_path)
+        else:
+            print("Checksum Mismatch")
+
+        self.cursor.execute("delete from resources where id=?", (r_id,))
+
+        self.conn.commit()
 
 
 if __name__ == '__main__':
