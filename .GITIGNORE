@@ -216,3 +216,4 @@ adapters/__pycache__/
 
 dropbox/*
 
+.DS_STORE
