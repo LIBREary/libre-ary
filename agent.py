@@ -1,3 +1,5 @@
+import json
+
 from adapters import *
 from ingester import Ingester
 
@@ -27,7 +29,35 @@ class LibrearyAgent:
             check_single_resource(resource[0])
 
     def check_single_resource(self, r_id):
-        pass
+        resource_info = load_metadata(r_id)
+        canonical_checksum = resource_info[4]
+        level = resource_info[3]
+
+        level_info = get_level_info(level)
+        adapters = level_info[3].split(",")
+
+        copies = get_all_copies(r_id)
+
+        found = False
+
+        for adapter in adapters:
+            for copy in copies:
+                if adapter == copy[2]:
+                    found = True
+                    if copy[2] != canonical_checksum:
+                        a = create_adapter(self.adapter_type, adapter)
+                        a.delete(r_id)
+                        a.store(r_id)
+            # didn't find the copy from this adapter
+            if not found:
+                a = create_adapter(self.adapter_type, adapter)
+                a.store(r_id)
+            else:
+                found = False
+
+
+    def get_level_info(self, l_id):
+        return self.cursor.execute("select * from levels where id=?", (l_id)).fetchone()
 
     def get_all_copies(self, r_id):
     	copies = self.cursor.execute("select * from copies where resource_id=?", (r_id))
@@ -41,7 +71,9 @@ class LibrearyAgent:
     	adapter = adapter_translate[adapter_type](config=self.config["adapters"][adapter_id])
         return adapter
 
-
+    def load_metadata(self, r_id):
+        return self.cursor.execute(
+            "select * from resources where id={}".format(r_id)).fetchall()
 
 
 
