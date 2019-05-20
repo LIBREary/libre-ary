@@ -3,6 +3,8 @@ import os
 from shutil import copyfile
 import hashlib
 
+CONFIG_DIR = "config"
+
 class Ingester:
 
     def __init__(self, config):
@@ -67,15 +69,6 @@ class Ingester:
 
 
 if __name__ == '__main__':
-    config = { "metadata": {
-            "db_file": "metadata/md_index.db",
-        },
-        "adapter": {
-            "storage_dir": "~/Desktop/librelocal",
-            "adapter_identifier": "local1"
-        },
-        "options": {
-            "dropbox_dir": "dropbox"
-        } }
+    config = json.load(open("{}/{}".format(CONFIG_DIR, "ingester_config.json")))
     i = Ingester(config)
     i.ingest("/Users/glick/Desktop/librelocal/helppls.txt", [1,])

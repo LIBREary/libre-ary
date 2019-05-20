@@ -2,9 +2,11 @@ import sqlite3
 import os
 from shutil import copyfile
 import hashlib
+import json
 
 from BaseAdapter import BaseAdapter
 
+CONFIG_DIR = "../config"
 
 class LocalAdapter(BaseAdapter):
     """docstring for LocalAdapter
@@ -107,19 +109,6 @@ class LocalAdapter(BaseAdapter):
 
 
 if __name__ == '__main__':
-    config = {
-        "metadata": {
-            "db_file": "metadata/md_index.db",
-        },
-        "adapter": {
-            "storage_dir": "~/Desktop/librelocal",
-            "adapter_identifier": "local1"
-        },
-        "options": {
-            "dropbox_dir": "dropbox",
-            "output_dir": "retrieval"
-        }
-    }
+    config = json.load(open("{}/{}".format(CONFIG_DIR, "local1_config.json")))
     
     la = LocalAdapter(config)
-    la.retrieve("16")

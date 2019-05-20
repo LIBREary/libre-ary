@@ -1,6 +1,8 @@
 from adapters import *
 from ingester import Ingester
 
+CONFIG_DIR = "config"
+
 adapter_translate = {
 	"local": LocalAdapter.LocalAdapter
 }
@@ -44,28 +46,5 @@ class LibrearyAgent:
 
 
 if __name__ == '__main__':
-	config = {
-        "metadata": {
-            "db_file": "metadata/md_index.db",
-        },
-        "adapters": {
-
-        "local1": {
-            "storage_dir": "~/Desktop/librelocal",
-            "adapter_identifier": "local1",
-            "adapter_type": "local"
-        },
-        "local2": {
-        	"storage_dir": "~/Desktop/librelocal2",
-            "adapter_identifier": "local2"
-
-        }
-
-        },
-        "options": {
-            "dropbox_dir": "dropbox",
-            "output_dir": "retrieval"
-        }
-    }
-
-    agent = LibrearyAgent()
+	config = json.load(open("{}/{}".format(CONFIG_DIR, "agent_config.json")))
+    agent = LibrearyAgent(config)

@@ -1,0 +1,23 @@
+ {
+        "metadata": {
+            "db_file": "metadata/md_index.db",
+        },
+        "adapters": {
+
+        "local1": {
+            "storage_dir": "~/Desktop/librelocal",
+            "adapter_identifier": "local1",
+            "adapter_type": "local"
+        },
+        "local2": {
+        	"storage_dir": "~/Desktop/librelocal2",
+            "adapter_identifier": "local2"
+
+        }
+
+        },
+        "options": {
+            "dropbox_dir": "dropbox",
+            "output_dir": "retrieval"
+        }
+    }
