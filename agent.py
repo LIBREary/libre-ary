@@ -20,11 +20,16 @@ class LibrearyAgent:
 
 
     def run_check(self):
-    	pass
+    	resources = self.ingester.get_all_copies()
+        for resource in resources:
+            check_single_resource(resource[0])
 
+    def check_single_resource(self, r_id):
+        pass
 
     def get_all_copies(self, r_id):
-    	pass
+    	copies = self.cursor.execute("select * from copies where resource_id=?", (r_id))
+        return copies.fetchall()
 
 
     def ingest_to_db(self, file):
@@ -32,7 +37,7 @@ class LibrearyAgent:
 
     def create_adapter(self, adapter_type, adapter_id):
     	adapter = adapter_translate[adapter_type](config=self.config["adapters"][adapter_id])
-
+        return adapter
 
 
 
