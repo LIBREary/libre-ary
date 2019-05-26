@@ -6,6 +6,7 @@ import json
 
 from BaseAdapter import BaseAdapter
 
+
 CONFIG_DIR = "../config"
 
 class LocalAdapter(BaseAdapter):
@@ -109,6 +110,10 @@ class LocalAdapter(BaseAdapter):
 
 
 if __name__ == '__main__':
-    config = json.load(open("{}/{}".format(CONFIG_DIR, "local1_config.json")))
+
+    from ..config_parser import ConfigParser
+
+    parser = ConfigParser()
+    config = parser.create_config_for_adapter("local1", "local")
     
     la = LocalAdapter(config)
