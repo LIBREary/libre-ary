@@ -1,6 +1,6 @@
  {
         "metadata": {
-            "db_file": "metadata/md_index.db",
+            "db_file": "metadata/md_index.db"
         },
         "adapters": {
 
