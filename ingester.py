@@ -2,6 +2,7 @@ import sqlite3
 import os
 from shutil import copyfile
 import hashlib
+import uuid
 
 CONFIG_DIR = "config"
 
@@ -14,7 +15,7 @@ class Ingester:
         self.dropbox_dir = config["options"]["dropbox_dir"]
 
     def ingest(self, file, levels):
-        """returns resource id"""
+        """returns resource uuid"""
         filename = file.split("/")[-1]
         sha1Hash = hashlib.sha1(open(file,"rb").read())
         checksum = sha1Hash.hexdigest()
@@ -37,13 +38,13 @@ class Ingester:
         levels = ",".join([str(l) for l in levels])
 
         # Ingest to db
-
-        self.cursor.execute("insert into resources values (?, ?, ?, ?,?)", 
-            (None, filename, dropbox_path, levels, checksum))
+        uuid = str(uuid.uuid4())
+        self.cursor.execute("insert into resources values (?, ?, ?, ?,?, ?)", 
+            (None, filename, dropbox_path, levels, checksum, uuid))
 
         self.conn.commit()
 
-        return self.cursor.execute("select * from resources where name=? limit 1", (filename,)).fetchone()[0]
+        return uuid
         
 
 

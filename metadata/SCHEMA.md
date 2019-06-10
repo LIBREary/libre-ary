@@ -5,7 +5,7 @@
 ### Table 1: Resources
 
 Table name: resources
-Fields: INT id, TEXT path, TEXT level, TEXT name, TEXT checksum
+Fields: INT id, TEXT path, TEXT level, TEXT name, TEXT checksum, INT uuid
 
 ### Table 2: Criticality Levels
 
