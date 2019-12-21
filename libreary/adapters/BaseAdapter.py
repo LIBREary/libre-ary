@@ -18,7 +18,7 @@ class BaseAdapter:
 		"""
         pass
 
-    def _store_canonical(current_path, delete_after_store=False):
+    def _store_canonical(current_path, r_id, delete_after_store=False):
         """
         Ingest files as the canonical adapter. Don't run this function. Ingester will call it.
         """

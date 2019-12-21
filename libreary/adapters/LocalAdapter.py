@@ -4,12 +4,9 @@ from shutil import copyfile
 import hashlib
 import json
 
-from BaseAdapter import BaseAdapter
-
-
 CONFIG_DIR = "../config"
 
-class LocalAdapter(BaseAdapter):
+class LocalAdapter():
     """docstring for LocalAdapter
         
         LocalAdapter is a basic adapter which saves files 
@@ -92,16 +89,15 @@ class LocalAdapter(BaseAdapter):
     def update(self, r_id, updated):
         pass
 
-    def _store_canonical(current_path, r_id, checksum, filename, delete_after_store=False):
+    def _store_canonical(self, current_path, r_id, checksum, filename):
         """
             If we're using the LocalAdapter as a canonical adapter, we need
             to be able to store from a current path, taking in a generated UUID,
             rather than looking info up from the database.
         """
-        dropbox_path = current_path
+        current_location = current_path
         name = filename
-        current_location = "{}/{}".format(self.dropbox_dir, dropbox_path)
-        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, dropbox_path))
+        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, filename))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
         sha1Hash = hashlib.sha1(open(current_location,"rb").read())
@@ -113,9 +109,8 @@ class LocalAdapter(BaseAdapter):
         if os.path.isfile(new_location):
             new_location = "{}_{}".format(new_location, r_id)
 
-        other_copies = self.cursor.execute(
-            "select * from copies where resource_id='{}' and adapter_identifier='{}' limit 1".format(
-            r_id, self.adapter_id)).fetchall()
+        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' limit 1".format( str(r_id), self.adapter_id)
+        other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
             return
@@ -129,12 +124,8 @@ class LocalAdapter(BaseAdapter):
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_type, new_location, sha1Hashed, self.adapter_id])
+            [None, r_id, self.adapter_id,  new_location, sha1Hashed, self.adapter_type])
         self.conn.commit()
-
-        if delete_after_store:
-            # Delete the temporary copy
-            pass
 
         return new_location
 

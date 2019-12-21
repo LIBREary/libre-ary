@@ -3,6 +3,7 @@ import os
 from shutil import copyfile
 import hashlib
 import uuid
+import json
 
 from adapters.LocalAdapter import LocalAdapter
 from config_parser import ConfigParser
@@ -16,34 +17,38 @@ class Ingester:
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
         self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.canonical_adapter_config = config["canonical_adapter"]
+        self.canonical_adapter_id = config["canonical_adapter"]
+        self.canonical_adapter_type = config["canonical_adapter_id"]
 
     def ingest(self, current_file_path, levels, delete_after_store=False):
         """returns resource uuid"""
-        filename = file.split("/")[-1]
-        sha1Hash = hashlib.sha1(open(file,"rb").read())
+        filename = current_file_path.split("/")[-1]
+        sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())
         checksum = sha1Hash.hexdigest()
 
         parser = ConfigParser()
-        canonical_adapter_config = parser.create_config_for_adapter("local1", "local")
+        canonical_adapter_config = parser.create_config_for_adapter(self.canonical_adapter_id, self.canonical_adapter_type)
 
         # later, we will have this line. For now, we only support LocalAdapter
         # canonical_adapter = AdapterFactory.adapter(canonical_adapter_config)
 
-        uuid = str(uuid.uuid4())
-        canoncial_adapter = LocalAdapter(canonical_adapter_config)
-        canonical_adapter._store_canonical(current_file_path, uuid, checksum, filename, delete_after_store=False)
+        obj_uuid = str(uuid.uuid4())
+        canonical_adapter = LocalAdapter(canonical_adapter_config)
+        canonical_adapter_locator = canonical_adapter._store_canonical(current_file_path, obj_uuid, checksum, filename)
 
         levels = ",".join([str(l) for l in levels])
 
         # Ingest to db
         
         self.cursor.execute("insert into resources values (?, ?, ?, ?,?, ?)", 
-            (None, filename, dropbox_path, levels, checksum, uuid))
+            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid))
 
         self.conn.commit()
 
-        return uuid
+        if delete_after_store:
+            pass
+
+        return obj_uuid
 
 
     def list_resources(self):
@@ -70,4 +75,4 @@ class Ingester:
 if __name__ == '__main__':
     config = json.load(open("{}/{}".format(CONFIG_DIR, "ingester_config.json")))
     i = Ingester(config)
-    i.ingest("/Users/glick/Desktop/librelocal/helppls.txt", [1,])
+    i.ingest("/Users/ben/Desktop/dropbox/helppls.txt", [1,])
