@@ -92,6 +92,52 @@ class LocalAdapter(BaseAdapter):
     def update(self, r_id, updated):
         pass
 
+    def _store_canonical(current_path, r_id, checksum, filename, delete_after_store=False):
+        """
+            If we're using the LocalAdapter as a canonical adapter, we need
+            to be able to store from a current path, taking in a generated UUID,
+            rather than looking info up from the database.
+        """
+        dropbox_path = current_path
+        name = filename
+        current_location = "{}/{}".format(self.dropbox_dir, dropbox_path)
+        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, dropbox_path))
+        new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
+
+        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        sha1Hashed = sha1Hash.hexdigest()
+
+        if not os.path.isdir(new_dir):
+            os.makedirs(new_dir)
+
+        if os.path.isfile(new_location):
+            new_location = "{}_{}".format(new_location, r_id)
+
+        other_copies = self.cursor.execute(
+            "select * from copies where resource_id='{}' and adapter_identifier='{}' limit 1".format(
+            r_id, self.adapter_id)).fetchall()
+        if len(other_copies) != 0:
+            print("Other copies from this adapter exist")
+            return
+
+        if sha1Hashed == checksum:
+            copyfile(current_location, new_location)
+        else:
+            print("Checksum Mismatch")
+            raise Exception
+            exit()
+
+        self.cursor.execute(
+            "insert into copies values ( ?,?, ?, ?, ?, ?)",
+            [None, r_id, self.adapter_type, new_location, sha1Hashed, self.adapter_id])
+        self.conn.commit()
+
+        if delete_after_store:
+            # Delete the temporary copy
+            pass
+
+        return new_location
+
     def delete(self, r_id):
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",

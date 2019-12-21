@@ -18,6 +18,13 @@ class BaseAdapter:
 		"""
         pass
 
+    def _store_canonical(current_path, delete_after_store=False):
+        """
+        Ingest files as the canonical adapter. Don't run this function. Ingester will call it.
+        """
+        pass
+
+
     def retrieve(resource_id):
         """
 		Given a resource id, load it from the adapter's repository
