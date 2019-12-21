@@ -16,7 +16,7 @@
         }
     },
     "options": {
-        "dropbox_dir": "dropbox",
-        "output_dir": "retrieval"
+        "dropbox_dir": "/Users/ben/Desktop/dropbox",
+        "output_dir": "/Users/ben/Desktop/retrieval"
     }
 }

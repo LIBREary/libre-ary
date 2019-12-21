@@ -6,14 +6,14 @@ from ingester import Ingester
 CONFIG_DIR = "config"
 
 adapter_translate = {
-	"local": LocalAdapter.LocalAdapter
+    "local": LocalAdapter.LocalAdapter
 }
 
 class LibrearyAgent:
 
 
-	def __init__(self, config):
-		self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
+    def __init__(self, config):
+        self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
         self.storage_dir = config["adapter"]["storage_dir"]
@@ -24,7 +24,7 @@ class LibrearyAgent:
 
 
     def run_check(self):
-    	resources = self.ingester.get_all_copies()
+        resources = self.ingester.get_all_copies()
         for resource in resources:
             check_single_resource(resource[0])
 
@@ -60,15 +60,15 @@ class LibrearyAgent:
         return self.cursor.execute("select * from levels where id=?", (l_id)).fetchone()
 
     def get_all_copies(self, r_id):
-    	copies = self.cursor.execute("select * from copies where resource_id=?", (r_id))
+        copies = self.cursor.execute("select * from copies where resource_id=?", (r_id))
         return copies.fetchall()
 
 
     def ingest_to_db(self, file):
-    	pass
+        pass
 
     def create_adapter(self, adapter_type, adapter_id):
-    	adapter = adapter_translate[adapter_type](config=self.config["adapters"][adapter_id])
+        adapter = adapter_translate[adapter_type](config=self.config["adapters"][adapter_id])
         return adapter
 
     def load_metadata(self, r_id):
@@ -78,5 +78,5 @@ class LibrearyAgent:
 
 
 if __name__ == '__main__':
-	config = json.load(open("{}/{}".format(CONFIG_DIR, "agent_config.json")))
+    config = json.load(open("{}/{}".format(CONFIG_DIR, "agent_config.json")))
     agent = LibrearyAgent(config)
