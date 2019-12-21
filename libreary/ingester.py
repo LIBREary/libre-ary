@@ -48,6 +48,9 @@ class Ingester:
         if delete_after_store:
             pass
 
+        # Distribute initial copies
+        # self.adapter_manager.distribute_copies(obj_uuid)
+
         return obj_uuid
 
 

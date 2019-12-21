@@ -1,6 +1,6 @@
 {
 
-	"metadata": {
+    "metadata": {
             "db_file": "metadata/md_index.db"
         },"options": {
             "dropbox_dir": "/Users/ben/Desktop/dropbox",
