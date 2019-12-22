@@ -75,27 +75,32 @@ class AdapterManager:
         canonical_checksum = resource_info[4]
         level = resource_info[3]
 
-        level_info = get_level_info(level)
-        adapters = level_info[3].split(",")
+        copies = get_all_copies_metadata(r_id)
 
-        copies = get_all_copies(r_id)
-
-        found = False
-
-        for adapter in adapters:
-            for copy in copies:
-                if adapter == copy[2]:
-                    found = True
-                    if copy[2] != canonical_checksum:
-                        a = create_adapter(self.adapter_type, adapter)
-                        a.delete(r_id)
-                        a.store(r_id)
+        for copy in copies:
+            if adapter == copy[2]:
+                found = True
+                if copy[2] != canonical_checksum:
+                    a = create_adapter(self.adapter_type, adapter)
+                    a.delete(r_id)
+                    a.store(r_id)
             # didn't find the copy from this adapter
-            if not found:
+        if not found:
+            try:
                 a = create_adapter(self.adapter_type, adapter)
                 a.store(r_id)
-            else:
+                found = True
+            except Exception as e:
                 found = False
+        return found
+        
+    def verify_adapter_metadata(self, adapter_id, r_id):
+        """
+        A different kind of check. Verify that the file is actually retirevable via
+        adapter id, not just there according to the metadata. This will be a function of 
+        levels
+        """
+        pass
 
     def get_resource_metadata(self, r_id):
         return self.cursor.execute(
