@@ -1,0 +1,17 @@
+{
+     "metadata": {
+        "db_file": "metadata/md_index.db"
+    },
+    "adapters":[{
+        "type":"local",
+        "id": "local2"
+    },{
+        "type":"local",
+        "id": "local1"
+    }
+    ],
+    "options": {
+        "dropbox_dir": "/Users/ben/Desktop/dropbox",
+        "output_dir": "/Users/ben/Desktop/retrieval"
+    }
+}

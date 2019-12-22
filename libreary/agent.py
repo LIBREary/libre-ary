@@ -65,7 +65,7 @@ class LibrearyAgent:
 
 
     def ingest_to_db(self, file):
-        pass
+        self.ingester.ingest(file)
 
     def create_adapter(self, adapter_type, adapter_id):
         adapter = adapter_translate[adapter_type](config=self.config["adapters"][adapter_id])
