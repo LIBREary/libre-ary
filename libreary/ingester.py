@@ -5,7 +5,7 @@ import hashlib
 import uuid
 import json
 
-from adapters.LocalAdapter import LocalAdapter
+from AdapterManager import AdapterManager
 from config_parser import ConfigParser
 
 CONFIG_DIR = "config"
@@ -29,11 +29,10 @@ class Ingester:
         parser = ConfigParser()
         canonical_adapter_config = parser.create_config_for_adapter(self.canonical_adapter_id, self.canonical_adapter_type)
 
-        # later, we will have this line. For now, we only support LocalAdapter
-        # canonical_adapter = AdapterFactory.adapter(canonical_adapter_config)
+        canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id)
 
         obj_uuid = str(uuid.uuid4())
-        canonical_adapter = LocalAdapter(canonical_adapter_config)
+
         canonical_adapter_locator = canonical_adapter._store_canonical(current_file_path, obj_uuid, checksum, filename)
 
         levels = ",".join([str(l) for l in levels])

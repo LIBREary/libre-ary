@@ -63,8 +63,8 @@ class AdapterManager:
 
 if __name__ == '__main__':
     config = json.load(open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
-    am = AdapterManager(config)
-    local1 = am.create_adapter("LocalAdapter", "local1")
+    #am = AdapterManager(config)
+    local1 = AdapterManager.create_adapter("LocalAdapter", "local1")
     print(local1)
 
 

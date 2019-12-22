@@ -7,5 +7,5 @@
             "output_dir": "/Users/ben/Desktop/retrieval"
         },
         "canonical_adapter": "local1",
-        "canonical_adapter_id":"local"
+        "canonical_adapter_id":"LocalAdapter"
 }
