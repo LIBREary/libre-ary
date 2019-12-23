@@ -27,6 +27,9 @@ class AdapterManager:
         self.ret_dir = config["options"]["output_dir"]
         self.levels = []
         self.adapters = {}
+        # Run this any time you expect levels and adapters to change
+        # For most use cases, this will only be on construction
+        # This method should be run externally, any time a new level is added
         self.reload_levels_adapters()
 
     def reload_levels_adapters(self):
@@ -34,14 +37,20 @@ class AdapterManager:
         self._set_adapters()
 
     def get_all_levels(self):
-        level_data = self.cursor.execute("")
+        level_data = self.cursor.execute("select * from levels").fetchall()
+        levels = []
+        for level in level_data:
+            levels.append({"id": level[0], "name": level[1], "frequency": level[2], "adapters": level[3].split(",")})
+        return levels
 
     def _set_levels(self):
         self.levels = get_all_levels()
 
     def get_all_adapters(self):
         """
-        Set up all of the adapters we will need
+        Set up all of the adapters we will need.
+
+        Ensure that self.levels is set properly before running this
         """
         adapters = {}
         for level in self.levels:
