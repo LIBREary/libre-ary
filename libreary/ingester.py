@@ -20,7 +20,7 @@ class Ingester:
         self.canonical_adapter_id = config["canonical_adapter"]
         self.canonical_adapter_type = config["canonical_adapter_id"]
 
-    def ingest(self, current_file_path, levels, delete_after_store=False):
+    def ingest(self, current_file_path, levels, description delete_after_store=False):
         """returns resource uuid"""
         filename = current_file_path.split("/")[-1]
         sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())
@@ -39,8 +39,8 @@ class Ingester:
 
         # Ingest to db
         
-        self.cursor.execute("insert into resources values (?, ?, ?, ?,?, ?)", 
-            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid))
+        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)", 
+            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid, description))
 
         self.conn.commit()
 

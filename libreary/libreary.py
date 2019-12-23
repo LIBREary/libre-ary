@@ -36,5 +36,8 @@ class Libreary:
     def update():
         pass
 
+    def search():
+        pass
+
     def check_copies():
         pass
