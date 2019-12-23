@@ -25,25 +25,33 @@ class AdapterManager:
         self.cursor = self.conn.cursor()
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.ret_dir = config["options"]["output_dir"]
-        self.get_all_adapters()
         self.levels = []
         self.adapters = {}
+        self.reload_levels_adapters()
 
-    def get_all_levels():
-        pass
+    def reload_levels_adapters(self):
+        self._set_levels()
+        self._set_adapters()
 
-    def get_adapters_by_level():
-        pass
+    def get_all_levels(self):
+        level_data = self.cursor.execute("")
 
-    def get_all_adapters():
+    def _set_levels(self):
+        self.levels = get_all_levels()
+
+    def get_all_adapters(self):
         """
         Set up all of the adapters we will need
         """
-        self.levels = get_all_levels() 
-        for level in levels:
+        adapters = {}
+        for level in self.levels:
             # Each level may need several adapters
             for adapter in level["adapters"]:
-                self.adapters[adapter["id"]] = create_adapter(adapter["type"], adapter["id"])
+                adapters[adapter["id"]] = create_adapter(adapter["type"], adapter["id"])
+        return adapters
+
+    def _set_adapters(self):
+        self.adapters = get_all_adapters()
 
     def verify_adapter(adapter_id):
         """
