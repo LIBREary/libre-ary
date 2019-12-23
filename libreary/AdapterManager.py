@@ -25,6 +25,9 @@ class AdapterManager:
         self.cursor = self.conn.cursor()
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.ret_dir = config["options"]["output_dir"]
+        self.get_all_adapters()
+        self.levels = []
+        self.adapters = {}
 
     def get_all_levels():
         pass
@@ -32,7 +35,17 @@ class AdapterManager:
     def get_adapters_by_level():
         pass
 
-    def verify_adapter():
+    def get_all_adapters():
+        """
+        Set up all of the adapters we will need
+        """
+        self.levels = get_all_levels() 
+        for level in levels:
+            # Each level may need several adapters
+            for adapter in level["adapters"]:
+                self.adapters[adapter["id"]] = create_adapter(adapter["type"], adapter["id"])
+
+    def verify_adapter(adapter_id):
         """
         Make sure an adapter is working. We store, retrieve, and delete a file
         that we know the contents of, and make sure the checksums all add up.
@@ -68,6 +81,12 @@ class AdapterManager:
         pass
 
     def retrieve_by_preference():
+        """
+        get a copy of a file, preferring canonical adapter, perhaps then enforcing some preference hierarchy
+        """
+        pass
+
+    def update_checksum(resource_id, adapter_id):
         pass
 
     def check_single_resource_single_adapter(self, r_id, adapter_id):

@@ -8,3 +8,6 @@ class Scheduler:
 
 	def verify_schedule():
 		pass
+
+	def schedule_verification():
+		pass
