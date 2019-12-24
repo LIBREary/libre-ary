@@ -91,12 +91,22 @@ class AdapterManager:
     def change_resource_level():
         pass
 
+    def verify_ingestion():
+        """
+        Make sure an object has been properly ingested.
+        """
+        pass
+
     def summarize_copies(self, r_id):
         """
         This method trusts the metadata database. There should be a separate method to 
         verify the metadata db so that we know we can trust this info
         """
         sql = "select * from copies where resource_id = '{}'".format(r_id)
+        return self.cursor.execute(sql).fetchall()
+
+    def get_canonical_copy_metadata(self, r_id):
+        sql = "select * from copies where resource_id = '{}' and canonical=1".format(r_id)
         return self.cursor.execute(sql).fetchall()
 
     def compare_copies():
