@@ -151,10 +151,6 @@ class AdapterManager:
     def get_level_info(self, l_id):
         return self.cursor.execute("select * from levels where id=?", (l_id)).fetchone()
 
-    def get_all_copies_metadata(self, r_id):
-        copies = self.cursor.execute("select * from copies where resource_id=?", (r_id))
-        return copies.fetchall()
-
 if __name__ == '__main__':
     config = json.load(open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
     am = AdapterManager(config)
