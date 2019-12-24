@@ -91,8 +91,13 @@ class AdapterManager:
     def change_resource_level():
         pass
 
-    def summarize_copies():
-        pass
+    def summarize_copies(r_id):
+        """
+        This method trusts the metadata database. There should be a separate method to 
+        verify the metadata db so that we know we can trust this info
+        """
+        sql = "select * from copies where resource_id = '{}'".format(r_id)
+        return self.cursor.execute(sql).fetchall()
 
     def compare_copies():
         pass
@@ -100,6 +105,7 @@ class AdapterManager:
     def retrieve_by_preference():
         """
         get a copy of a file, preferring canonical adapter, perhaps then enforcing some preference hierarchy
+        This will be called when Libreary is asked to retrieve.
         """
         pass
 
