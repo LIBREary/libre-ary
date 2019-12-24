@@ -40,11 +40,11 @@ class AdapterManager:
         level_data = self.cursor.execute("select * from levels").fetchall()
         levels = []
         for level in level_data:
-            levels.append({"id": level[0], "name": level[1], "frequency": level[2], "adapters": level[3].split(",")})
+            levels.append({"id": level[0], "name": level[1], "frequency": level[2], "adapters": json.loads(level[3])})
         return levels
 
     def _set_levels(self):
-        self.levels = get_all_levels()
+        self.levels = self.get_all_levels()
 
     def get_all_adapters(self):
         """
@@ -56,11 +56,11 @@ class AdapterManager:
         for level in self.levels:
             # Each level may need several adapters
             for adapter in level["adapters"]:
-                adapters[adapter["id"]] = create_adapter(adapter["type"], adapter["id"])
+                adapters[adapter["id"]] = AdapterManager.create_adapter(adapter["type"], adapter["id"])
         return adapters
 
     def _set_adapters(self):
-        self.adapters = get_all_adapters()
+        self.adapters = self.get_all_adapters()
 
     def verify_adapter(adapter_id):
         """
@@ -151,8 +151,7 @@ class AdapterManager:
 
 if __name__ == '__main__':
     config = json.load(open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
-    #am = AdapterManager(config)
-    local1 = AdapterManager.create_adapter("LocalAdapter", "local1")
-    print(local1)
+    am = AdapterManager(config)
+    print(am.adapters)
 
 

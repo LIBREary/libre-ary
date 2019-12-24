@@ -3,8 +3,8 @@
             "db_file": "metadata/md_index.db"
         },
         "adapter": {
-            "storage_dir": "~/Desktop/librelocal",
-            "adapter_identifier": "local1",
+            "storage_dir": "~/Desktop/librelocal2",
+            "adapter_identifier": "local2",
             "adapter_type": "LocalAdapter"
         },
         "options": {
