@@ -91,7 +91,7 @@ class AdapterManager:
     def change_resource_level():
         pass
 
-    def summarize_copies(r_id):
+    def summarize_copies(self, r_id):
         """
         This method trusts the metadata database. There should be a separate method to 
         verify the metadata db so that we know we can trust this info
