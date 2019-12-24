@@ -44,3 +44,11 @@ class BaseAdapter:
         delete a resource
         """
         pass
+
+    def get_actual_checksum(self, r_id):
+        """
+        Return an exact checksum of a resource, not relying on the metadata db
+
+        If possible, this should be done with no file I/O
+        """
+        pass

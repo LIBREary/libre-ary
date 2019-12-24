@@ -109,7 +109,7 @@ class AdapterManager:
         sql = "select * from copies where resource_id = '{}' and canonical=1".format(r_id)
         return self.cursor.execute(sql).fetchall()
 
-    def compare_copies():
+    def compare_copies(self, r_id, adapter_id_1, adapter_id_2):
         pass
 
     def retrieve_by_preference():

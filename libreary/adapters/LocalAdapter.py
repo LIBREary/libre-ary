@@ -24,6 +24,7 @@ class LocalAdapter():
 
     def __init__(self, config):
         self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
+        print(self.metadata_db)
         self.adapter_id = config["adapter"]["adapter_identifier"]
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
@@ -131,7 +132,7 @@ class LocalAdapter():
 
     def delete(self, r_id):
         copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
+            "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
         expected_hash = self.load_metadata(r_id)[0][4]
         copy_path = copy_info[3]
@@ -145,12 +146,33 @@ class LocalAdapter():
         return self.cursor.execute(
             "select * from resources where id={}".format(r_id)).fetchall()
 
+    def get_actual_checksum(self, r_id):
+        """
+        Return an exact checksum of a resource, not relying on the metadata db
+        """
+        copy_info = self.cursor.execute(
+            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
+            (r_id, self.adapter_id)).fetchall()[0]
+        path = copy_info[3]
+        hash_obj = hashlib.sha1(open(path,"rb").read())
+        checksum = hash_obj.hexdigest()
+        return checksum
+
 
 if __name__ == '__main__':
 
-    from ..config_parser import ConfigParser
+    def create_config_for_adapter(adapter_id, adapter_type):
+        base_config = json.load(open("{}/{}_config.json".format(CONFIG_DIR, adapter_id)))
+        general_config = json.load(open("{}/agent_config.json".format(CONFIG_DIR)))
+        full_adapter_conf = {}
+        full_adapter_conf["adapter"] = base_config["adapter"]
+        full_adapter_conf["adapter"]["adapter_type"] = adapter_type
+        full_adapter_conf["metadata"] = general_config["metadata"]
+        full_adapter_conf["options"] = general_config["options"]
 
-    parser = ConfigParser()
-    config = parser.create_config_for_adapter("local1", "local")
+        return full_adapter_conf
+
+    config = create_config_for_adapter("local1", "local")
     
     la = LocalAdapter(config)
+    print(la.get_actual_checksum("8af62ae7-6017-439b-8343-662387e9f0b6"))

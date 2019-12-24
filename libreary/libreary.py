@@ -15,7 +15,7 @@ class Libreary:
         """
         self.adapters = []
 
-    def run_check():
+    def run_check(deep=True):
         pass
 
     def ingest():
@@ -39,5 +39,5 @@ class Libreary:
     def search():
         pass
 
-    def check_copies():
+    def check_single_resource():
         pass
