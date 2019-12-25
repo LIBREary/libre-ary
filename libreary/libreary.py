@@ -15,13 +15,20 @@ class Libreary:
         """
         self.adapters = []
 
-    def run_check(deep=True):
+    def run_check(deep=False):
+        """
+        A deep check uses actual checksums, while a shallow check trusts the metadata database
+        """
         pass
 
     def ingest():
         pass
 
     def retrieve():
+        """
+        strategy: tell adapter manager 'i want this object'. 
+        THe adapter manager will sort out which copy to retrieve
+        """
         pass
 
     def delete():
