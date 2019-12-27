@@ -134,6 +134,11 @@ class AdapterManager:
                 print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
                 self.restore_from_canonical_copy(adapter.adapter_id, r_id)     
 
+    def restore_canonical_copy(self, r_id)
+        pass
+
+    def restore_from_canonical_copy(self, adapter_id, r_id):
+        pass
 
     def update_checksum(resource_id, adapter_id):
         pass
