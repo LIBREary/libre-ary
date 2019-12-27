@@ -5,6 +5,7 @@ import sqlite3
 
 from config_parser import ConfigParser
 from adapters.LocalAdapter import LocalAdapter
+from exceptions import ChecksumMismatchException
 
 CONFIG_DIR = "config"
 
@@ -27,6 +28,7 @@ class AdapterManager:
         self.ret_dir = config["options"]["output_dir"]
         self.levels = []
         self.adapters = {}
+        self.canonical_adapter = self.config["canonical_adapter"]
         # Run this any time you expect levels and adapters to change
         # For most use cases, this will only be on construction
         # This method should be run externally, any time a new level is added
@@ -112,12 +114,26 @@ class AdapterManager:
     def compare_copies(self, r_id, adapter_id_1, adapter_id_2):
         pass
 
-    def retrieve_by_preference():
+    def retrieve_by_preference(r_id):
         """
         get a copy of a file, preferring canonical adapter, perhaps then enforcing some preference hierarchy
         This will be called when Libreary is asked to retrieve.
         """
-        pass
+        # First, try the canonical copy:
+        try:
+            self.adapters[self.canonical_adapter].retrieve(r_id)
+        except ChecksumMismatchException:
+            print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
+            self.restore_canonical_copy(r_id)
+
+        for adapter in self.adapters.values():
+            try:
+                adapter.retrieve(r_id)
+                return True
+            except ChecksumMismatchException:
+                print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
+                self.restore_from_canonical_copy(adapter.adapter_id, r_id)     
+
 
     def update_checksum(resource_id, adapter_id):
         pass

@@ -13,5 +13,6 @@
     "options": {
         "dropbox_dir": "/Users/ben/Desktop/dropbox",
         "output_dir": "/Users/ben/Desktop/retrieval"
-    }
+    },
+    "canonical_adapter":"local1"
 }

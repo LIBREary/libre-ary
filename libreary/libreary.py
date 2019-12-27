@@ -8,9 +8,8 @@ class Libreary:
     def __init__(self, config_dir):
         """
         Set up all of the necessary tooling - We need to get an:
-        - agent
         - metadata manager
-        - set of adapters
+        - set of adapters (adapterman)
         - ingester
         """
         self.adapters = []
