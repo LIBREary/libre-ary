@@ -9,3 +9,6 @@ class MetadataUnavailableException(Exception):
 
 class AdapterConnectionFailureException(Exception):
 	pass
+
+class RestorationFailedException:
+	pass

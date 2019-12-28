@@ -77,7 +77,8 @@ class AdapterManager:
         Adapter factory type function. 
         We want to be able to use adapter configs to create adapters. 
         This will be useful for the ingester as well.
-        We eventually want this to be a static method.
+        
+        :param adapter_type must be the name of a valid adapter class.
         """
         parser = ConfigParser()
         cfg = parser.create_config_for_adapter(adapter_id, adapter_type)
@@ -167,13 +168,33 @@ class AdapterManager:
                 found = False
         return found
         
-    def verify_adapter_metadata(self, adapter_id, r_id):
+    def verify_adapter_metadata(self, adapter_id, r_id, delete_after_check=True):
         """
         A different kind of check. Verify that the file is actually retirevable via
-        adapter id, not just there according to the metadata. This will be a function of 
-        levels
+        adapter id, not just there according to the metadata.
+
+        Note, this retrieves the file, so it's relatively expensive.
         """
-        pass
+        current_resource_info = self.get_resource_metadata(r_id)
+        recorded_checksum = current_resource_info[4]
+        current_path = self.adapters[adapter_id].retrieve(r_id)
+        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        new_checksum = sha1Hash.hexdigest()
+
+        r_val = True
+
+        if new_checksum != old_checksum:
+            try:    
+                restore_from_canonical_copy(self, adapter_id, r_id)
+            except RestorationFailedException:
+                print("Restoration of {} in {} failed".format(r_id, adapter_id))
+                r_val = False    
+
+        if delete_after_check:
+            os.remove(current_path)
+
+        return r_val
+
 
     def get_resource_metadata(self, r_id):
         return self.cursor.execute(
