@@ -1,5 +1,7 @@
 import json
 import os
+import string
+import random
 
 import sqlite3
 
@@ -69,7 +71,31 @@ class AdapterManager:
         Make sure an adapter is working. We store, retrieve, and delete a file
         that we know the contents of, and make sure the checksums all add up.
         """
-        pass
+        dropbox_path = "{}/libreary_test_file.txt".format(self.config["options"]["dropbox_dir"])
+        adapter = self.adapters[adapter_id]
+        data_to_store = ''.join(random.choice(string.ascii_letters) for i in range(stringLength))
+        with open(dropbox_path, "w") as fh:
+            fh.write(data_to_store)
+        real_checksum = hashlib.sha1(open(dropbox_path,"rb").read()).hexdigest()
+        r_id = "LIBREARY_TEST_RESOURCE"
+        # To circumvent full ingestion process, we manually use _ingest_canonical 
+        # Not recommended for end users to do this.
+        adapter._store_canonical(dropbox_path, r_id, real_checksum, "libreary_test_resource.txt")
+        new_path = adapter.retrieve(r_id)
+        new_checksum = hashlib.sha1(open(new_path,"rb").read()).hexdigest()
+
+        r_val = False
+        if new_checksum == real_checksum:
+            r_val = True
+
+        os.remove(new_path)
+        os.remove(dropbox_path)
+
+        return r_val
+
+
+
+        
 
     @staticmethod
     def create_adapter(adapter_type, adapter_id):
@@ -185,7 +211,7 @@ class AdapterManager:
 
         if new_checksum != old_checksum:
             try:    
-                restore_from_canonical_copy(self, adapter_id, r_id)
+                self.restore_from_canonical_copy(self, adapter_id, r_id)
             except RestorationFailedException:
                 print("Restoration of {} in {} failed".format(r_id, adapter_id))
                 r_val = False    
