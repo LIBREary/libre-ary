@@ -2,6 +2,7 @@ import json
 import os
 import string
 import random
+import hashlib
 
 import sqlite3
 
@@ -10,6 +11,7 @@ from adapters.LocalAdapter import LocalAdapter
 from exceptions import ChecksumMismatchException
 
 CONFIG_DIR = "config"
+
 
 class AdapterManager:
     """
@@ -20,6 +22,7 @@ class AdapterManager:
 
     This is useful to keep the base Libreary class as simple as possible.
     """
+
     def __init__(self, config):
         self.config = config
         self.all_adapters = self.config["adapters"]
@@ -44,7 +47,10 @@ class AdapterManager:
         level_data = self.cursor.execute("select * from levels").fetchall()
         levels = []
         for level in level_data:
-            levels.append({"id": level[0], "name": level[1], "frequency": level[2], "adapters": json.loads(level[3])})
+            levels.append({"id": level[0],
+                           "name": level[1],
+                           "frequency": level[2],
+                           "adapters": json.loads(level[3])})
         return levels
 
     def _set_levels(self):
@@ -60,29 +66,37 @@ class AdapterManager:
         for level in self.levels:
             # Each level may need several adapters
             for adapter in level["adapters"]:
-                adapters[adapter["id"]] = AdapterManager.create_adapter(adapter["type"], adapter["id"])
+                adapters[adapter["id"]] = AdapterManager.create_adapter(
+                    adapter["type"], adapter["id"])
         return adapters
 
     def _set_adapters(self):
         self.adapters = self.get_all_adapters()
 
-    def verify_adapter(adapter_id):
+    def verify_adapter(self, adapter_id):
         """
         Make sure an adapter is working. We store, retrieve, and delete a file
         that we know the contents of, and make sure the checksums all add up.
         """
-        dropbox_path = "{}/libreary_test_file.txt".format(self.config["options"]["dropbox_dir"])
+        dropbox_path = "{}/libreary_test_file.txt".format(
+            self.config["options"]["dropbox_dir"])
         adapter = self.adapters[adapter_id]
-        data_to_store = ''.join(random.choice(string.ascii_letters) for i in range(stringLength))
+        data_to_store = ''.join(random.choice(string.ascii_letters)
+                                for i in range(500))
         with open(dropbox_path, "w") as fh:
             fh.write(data_to_store)
-        real_checksum = hashlib.sha1(open(dropbox_path,"rb").read()).hexdigest()
+        real_checksum = hashlib.sha1(
+            open(dropbox_path, "rb").read()).hexdigest()
         r_id = "LIBREARY_TEST_RESOURCE"
-        # To circumvent full ingestion process, we manually use _ingest_canonical 
+        # To circumvent full ingestion process, we manually use _ingest_canonical
         # Not recommended for end users to do this.
-        adapter._store_canonical(dropbox_path, r_id, real_checksum, "libreary_test_resource.txt")
+        adapter._store_canonical(
+            dropbox_path,
+            r_id,
+            real_checksum,
+            "libreary_test_resource.txt")
         new_path = adapter.retrieve(r_id)
-        new_checksum = hashlib.sha1(open(new_path,"rb").read()).hexdigest()
+        new_checksum = hashlib.sha1(open(new_path, "rb").read()).hexdigest()
 
         r_val = False
         if new_checksum == real_checksum:
@@ -93,17 +107,13 @@ class AdapterManager:
 
         return r_val
 
-
-
-        
-
     @staticmethod
     def create_adapter(adapter_type, adapter_id):
         """
-        Adapter factory type function. 
-        We want to be able to use adapter configs to create adapters. 
+        Adapter factory type function.
+        We want to be able to use adapter configs to create adapters.
         This will be useful for the ingester as well.
-        
+
         :param adapter_type must be the name of a valid adapter class.
         """
         parser = ConfigParser()
@@ -128,20 +138,21 @@ class AdapterManager:
 
     def summarize_copies(self, r_id):
         """
-        This method trusts the metadata database. There should be a separate method to 
+        This method trusts the metadata database. There should be a separate method to
         verify the metadata db so that we know we can trust this info
         """
         sql = "select * from copies where resource_id = '{}'".format(r_id)
         return self.cursor.execute(sql).fetchall()
 
     def get_canonical_copy_metadata(self, r_id):
-        sql = "select * from copies where resource_id = '{}' and canonical=1".format(r_id)
+        sql = "select * from copies where resource_id = '{}' and canonical=1".format(
+            r_id)
         return self.cursor.execute(sql).fetchall()
 
     def compare_copies(self, r_id, adapter_id_1, adapter_id_2):
         pass
 
-    def retrieve_by_preference(r_id):
+    def retrieve_by_preference(self, r_id):
         """
         get a copy of a file, preferring canonical adapter, perhaps then enforcing some preference hierarchy
         This will be called when Libreary is asked to retrieve.
@@ -159,9 +170,9 @@ class AdapterManager:
                 return True
             except ChecksumMismatchException:
                 print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
-                self.restore_from_canonical_copy(adapter.adapter_id, r_id)     
+                self.restore_from_canonical_copy(adapter.adapter_id, r_id)
 
-    def restore_canonical_copy(self, r_id)
+    def restore_canonical_copy(self, r_id):
         pass
 
     def restore_from_canonical_copy(self, adapter_id, r_id):
@@ -171,30 +182,31 @@ class AdapterManager:
         pass
 
     def check_single_resource_single_adapter(self, r_id, adapter_id):
-        resource_info = load_metadata(r_id)
+        resource_info = self.load_metadata(r_id)
         canonical_checksum = resource_info[4]
         level = resource_info[3]
 
-        copies = get_all_copies_metadata(r_id)
+        copies = self.get_all_copies_metadata(r_id)
 
         for copy in copies:
-            if adapter == copy[2]:
+            if adapter_id == copy[2]:
                 found = True
                 if copy[2] != canonical_checksum:
-                    a = create_adapter(self.adapter_type, adapter)
+                    a = AdapterManager.create_adapter(self.adapter_type, adapter_id)
                     a.delete(r_id)
                     a.store(r_id)
             # didn't find the copy from this adapter
         if not found:
             try:
-                a = create_adapter(self.adapter_type, adapter)
+                a = AdapterManager.create_adapter(self.adapter_type, adapter_id)
                 a.store(r_id)
                 found = True
-            except Exception as e:
+            except AdapterCreationFailedException:
                 found = False
         return found
-        
-    def verify_adapter_metadata(self, adapter_id, r_id, delete_after_check=True):
+
+    def verify_adapter_metadata(
+            self, adapter_id, r_id, delete_after_check=True):
         """
         A different kind of check. Verify that the file is actually retirevable via
         adapter id, not just there according to the metadata.
@@ -204,34 +216,36 @@ class AdapterManager:
         current_resource_info = self.get_resource_metadata(r_id)
         recorded_checksum = current_resource_info[4]
         current_path = self.adapters[adapter_id].retrieve(r_id)
-        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        sha1Hash = hashlib.sha1(open(current_path, "rb").read())
         new_checksum = sha1Hash.hexdigest()
 
         r_val = True
 
-        if new_checksum != old_checksum:
-            try:    
+        if new_checksum != recorded_checksum:
+            try:
                 self.restore_from_canonical_copy(self, adapter_id, r_id)
             except RestorationFailedException:
-                print("Restoration of {} in {} failed".format(r_id, adapter_id))
-                r_val = False    
+                print(
+                    "Restoration of {} in {} failed".format(
+                        r_id, adapter_id))
+                r_val = False
 
         if delete_after_check:
             os.remove(current_path)
 
         return r_val
 
-
     def get_resource_metadata(self, r_id):
         return self.cursor.execute(
             "select * from resources where id={}".format(r_id)).fetchall()
 
     def get_level_info(self, l_id):
-        return self.cursor.execute("select * from levels where id=?", (l_id)).fetchone()
+        return self.cursor.execute(
+            "select * from levels where id=?", (l_id)).fetchone()
+
 
 if __name__ == '__main__':
-    config = json.load(open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
+    config = json.load(
+        open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
     am = AdapterManager(config)
     print(am.adapters)
-
-

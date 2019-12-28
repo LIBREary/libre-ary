@@ -12,3 +12,6 @@ class AdapterConnectionFailureException(Exception):
 
 class RestorationFailedException:
 	pass
+
+class AdapterCreationFailedException:
+	pass
