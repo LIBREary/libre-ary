@@ -24,7 +24,6 @@ class LocalAdapter():
 
     def __init__(self, config):
         self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
-        print(self.metadata_db)
         self.adapter_id = config["adapter"]["adapter_identifier"]
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
@@ -74,7 +73,7 @@ class LocalAdapter():
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
-        expected_hash = self.load_metadata(r_id)[0][4]
+        expected_hash = copy_info[4]
         copy_path = copy_info[3]
         real_hash = copy_info[4]
 
@@ -134,7 +133,19 @@ class LocalAdapter():
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
-        expected_hash = self.load_metadata(r_id)[0][4]
+        expected_hash = copy_info[4]
+        copy_path = copy_info[3]
+
+        os.remove(copy_path)
+
+        self.cursor.execute("delete from copies where copy_id=?",
+                            [copy_info[0]])
+
+    def delete_canonical(self, r_id):
+        copy_info = self.cursor.execute(
+            "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
+            (r_id, self.adapter_id)).fetchall()[0]
+        expected_hash = copy_info[4]
         copy_path = copy_info[3]
 
         os.remove(copy_path)
@@ -144,7 +155,7 @@ class LocalAdapter():
 
     def load_metadata(self, r_id):
         return self.cursor.execute(
-            "select * from resources where id={}".format(r_id)).fetchall()
+            "select * from resources where id='{}'".format(r_id)).fetchall()
 
     def get_actual_checksum(self, r_id):
         """

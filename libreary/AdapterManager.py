@@ -102,6 +102,7 @@ class AdapterManager:
         if new_checksum == real_checksum:
             r_val = True
 
+        adapter.delete_canonical(r_id)
         os.remove(new_path)
         os.remove(dropbox_path)
 
@@ -182,7 +183,7 @@ class AdapterManager:
         pass
 
     def check_single_resource_single_adapter(self, r_id, adapter_id):
-        resource_info = self.load_metadata(r_id)
+        resource_info = self.get_resource_metadata(r_id)
         canonical_checksum = resource_info[4]
         level = resource_info[3]
 
@@ -237,7 +238,7 @@ class AdapterManager:
 
     def get_resource_metadata(self, r_id):
         return self.cursor.execute(
-            "select * from resources where id={}".format(r_id)).fetchall()
+            "select * from resources where id='{}'".format(r_id)).fetchall()
 
     def get_level_info(self, l_id):
         return self.cursor.execute(
@@ -248,4 +249,4 @@ if __name__ == '__main__':
     config = json.load(
         open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
     am = AdapterManager(config)
-    print(am.adapters)
+    print(am.verify_adapter("local1"))
