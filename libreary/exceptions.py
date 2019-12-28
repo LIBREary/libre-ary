@@ -15,3 +15,6 @@ class RestorationFailedException:
 
 class AdapterCreationFailedException:
 	pass
+
+class StorageFailedException:
+	pass

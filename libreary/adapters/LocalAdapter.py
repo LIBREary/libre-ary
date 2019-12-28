@@ -33,6 +33,11 @@ class LocalAdapter():
         self.ret_dir = config["options"]["output_dir"]
 
     def store(self, r_id):
+        """
+        Store assumes that the file is in the dropbox_dir
+        Is this ok? if so, do we just have AdapterManager take care of this?
+
+        """
         file_metadata = self.load_metadata(r_id)[0]
         dropbox_path = file_metadata[2]
         checksum = file_metadata[4]
@@ -51,7 +56,7 @@ class LocalAdapter():
             new_location = "{}_{}".format(new_location, r_id)
 
         other_copies = self.cursor.execute(
-            "select * from copies where resource_id='{}' and adapter_identifier='{}' limit 1".format(
+            "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
             r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
@@ -71,7 +76,7 @@ class LocalAdapter():
 
     def retrieve(self, r_id):
         copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
+            "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
         expected_hash = copy_info[4]
         copy_path = copy_info[3]
