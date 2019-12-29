@@ -67,7 +67,6 @@ class LocalAdapter():
         else:
             print("Checksum Mismatch")
             raise Exception
-            exit()
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
@@ -76,7 +75,7 @@ class LocalAdapter():
 
     def retrieve(self, r_id):
         copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
+            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
         expected_hash = copy_info[4]
         copy_path = copy_info[3]
@@ -114,11 +113,11 @@ class LocalAdapter():
         if os.path.isfile(new_location):
             new_location = "{}_{}".format(new_location, r_id)
 
-        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' limit 1".format( str(r_id), self.adapter_id)
+        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format( str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
-            return
+            raise StorageFailedException
 
         if sha1Hashed == checksum:
             copyfile(current_location, new_location)
@@ -145,6 +144,7 @@ class LocalAdapter():
 
         self.cursor.execute("delete from copies where copy_id=?",
                             [copy_info[0]])
+        self.conn.commit()
 
     def delete_canonical(self, r_id):
         copy_info = self.cursor.execute(
@@ -157,6 +157,7 @@ class LocalAdapter():
 
         self.cursor.execute("delete from copies where copy_id=?",
                             [copy_info[0]])
+        self.conn.commit()
 
     def load_metadata(self, r_id):
         return self.cursor.execute(
