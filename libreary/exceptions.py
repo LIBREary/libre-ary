@@ -18,3 +18,6 @@ class AdapterCreationFailedException:
 
 class StorageFailedException:
 	pass
+
+class OptionalModuleMissingException:
+	pass

@@ -8,6 +8,7 @@ import sqlite3
 
 from config_parser import ConfigParser
 from adapters.LocalAdapter import LocalAdapter
+from adapters.S3Adapter import S3Adapter
 from exceptions import ChecksumMismatchException
 
 CONFIG_DIR = "config"

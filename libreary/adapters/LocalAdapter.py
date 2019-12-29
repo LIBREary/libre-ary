@@ -60,7 +60,7 @@ class LocalAdapter():
             r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
-            exit(0)
+            raise StorageFailedException
 
         if sha1Hashed == checksum:
             copyfile(current_location, new_location)
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         return full_adapter_conf
 
-    config = create_config_for_adapter("local1", "local")
+    config = create_config_for_adapter("local1", "LocalAdapter")
     
     la = LocalAdapter(config)
     print(la.get_actual_checksum("8af62ae7-6017-439b-8343-662387e9f0b6"))
