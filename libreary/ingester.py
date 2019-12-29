@@ -5,8 +5,8 @@ import hashlib
 import uuid
 import json
 
-from AdapterManager import AdapterManager
-from config_parser import ConfigParser
+from libreary.adapter_manager import AdapterManager
+from libreary.config_parser import ConfigParser
 
 CONFIG_DIR = "config"
 
@@ -20,7 +20,7 @@ class Ingester:
         self.canonical_adapter_id = config["canonical_adapter"]
         self.canonical_adapter_type = config["canonical_adapter_id"]
 
-    def ingest(self, current_file_path, levels, description delete_after_store=False):
+    def ingest(self, current_file_path, levels, description, delete_after_store=False):
         """returns resource uuid"""
         filename = current_file_path.split("/")[-1]
         sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())

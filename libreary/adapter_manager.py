@@ -6,10 +6,10 @@ import hashlib
 
 import sqlite3
 
-from config_parser import ConfigParser
-from adapters.LocalAdapter import LocalAdapter
-from adapters.S3Adapter import S3Adapter
-from exceptions import ChecksumMismatchException
+from libreary.config_parser import ConfigParser
+from libreary.adapters.local import LocalAdapter
+from libreary.adapters.s3 import S3Adapter
+from libreary.exceptions import ChecksumMismatchException
 
 CONFIG_DIR = "config"
 
