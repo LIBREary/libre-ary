@@ -72,9 +72,3 @@ class Ingester:
         self.cursor.execute("delete from resources where id=?", (r_id,))
 
         self.conn.commit()
-
-
-if __name__ == '__main__':
-    config = json.load(open("{}/{}".format(CONFIG_DIR, "ingester_config.json")))
-    i = Ingester(config)
-    i.ingest("/Users/ben/Desktop/dropbox/helppls.txt", [1,])

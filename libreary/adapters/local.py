@@ -174,22 +174,3 @@ class LocalAdapter():
         hash_obj = hashlib.sha1(open(path,"rb").read())
         checksum = hash_obj.hexdigest()
         return checksum
-
-
-if __name__ == '__main__':
-
-    def create_config_for_adapter(adapter_id, adapter_type):
-        base_config = json.load(open("{}/{}_config.json".format(CONFIG_DIR, adapter_id)))
-        general_config = json.load(open("{}/agent_config.json".format(CONFIG_DIR)))
-        full_adapter_conf = {}
-        full_adapter_conf["adapter"] = base_config["adapter"]
-        full_adapter_conf["adapter"]["adapter_type"] = adapter_type
-        full_adapter_conf["metadata"] = general_config["metadata"]
-        full_adapter_conf["options"] = general_config["options"]
-
-        return full_adapter_conf
-
-    config = create_config_for_adapter("local1", "LocalAdapter")
-    
-    la = LocalAdapter(config)
-    print(la.get_actual_checksum("8af62ae7-6017-439b-8343-662387e9f0b6"))

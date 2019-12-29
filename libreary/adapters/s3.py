@@ -243,19 +243,3 @@ class S3Adapter:
     def load_metadata(self, r_id):
         return self.cursor.execute(
             "select * from resources where id='{}'".format(r_id)).fetchall()
-
-
-if __name__ == '__main__':
-    def create_config_for_adapter(adapter_id, adapter_type):
-        base_config = json.load(open("{}/{}_config.json".format(CONFIG_DIR, adapter_id)))
-        general_config = json.load(open("{}/agent_config.json".format(CONFIG_DIR)))
-        full_adapter_conf = {}
-        full_adapter_conf["adapter"] = base_config["adapter"]
-        full_adapter_conf["adapter"]["adapter_type"] = adapter_type
-        full_adapter_conf["metadata"] = general_config["metadata"]
-        full_adapter_conf["options"] = general_config["options"]
-
-        return full_adapter_conf
-
-    config = create_config_for_adapter("s3", "S3Adapter")
-    adapter = S3Adapter(config)
