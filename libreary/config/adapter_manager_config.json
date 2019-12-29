@@ -18,5 +18,6 @@
         "dropbox_dir": "/Users/ben/Desktop/dropbox",
         "output_dir": "/Users/ben/Desktop/retrieval"
     },
-    "canonical_adapter":"local1"
+    "canonical_adapter":"local1",
+    "config_dir":"/Users/ben/Desktop/libre-ary/libreary/config"
 }

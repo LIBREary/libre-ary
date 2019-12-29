@@ -9,10 +9,6 @@ import sqlite3
 from libreary.config_parser import ConfigParser
 from libreary.adapters.local import LocalAdapter
 from libreary.adapters.s3 import S3Adapter
-from libreary.exceptions import ChecksumMismatchException
-
-CONFIG_DIR = "config"
-
 
 class AdapterManager:
     """
@@ -67,7 +63,7 @@ class AdapterManager:
         for level in self.levels:
             # Each level may need several adapters
             for adapter in level["adapters"]:
-                adapters[adapter["id"]] = AdapterManager.create_adapter(
+                adapters[adapter["id"]] = self.create_adapter(
                     adapter["type"], adapter["id"])
         return adapters
 
@@ -109,8 +105,7 @@ class AdapterManager:
 
         return r_val
 
-    @staticmethod
-    def create_adapter(adapter_type, adapter_id):
+    def create_adapter(self, adapter_type, adapter_id):
         """
         Adapter factory type function.
         We want to be able to use adapter configs to create adapters.
@@ -118,7 +113,7 @@ class AdapterManager:
 
         :param adapter_type must be the name of a valid adapter class.
         """
-        parser = ConfigParser()
+        parser = ConfigParser(self.config["config_dir"])
         cfg = parser.create_config_for_adapter(adapter_id, adapter_type)
         adapter = eval("{}({})".format(adapter_type, cfg))
         return adapter
@@ -244,10 +239,3 @@ class AdapterManager:
     def get_level_info(self, l_id):
         return self.cursor.execute(
             "select * from levels where id=?", (l_id)).fetchone()
-
-
-if __name__ == '__main__':
-    config = json.load(
-        open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
-    am = AdapterManager(config)
-    print(am.verify_adapter("s3"))
