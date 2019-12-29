@@ -3,11 +3,15 @@
         "db_file": "/Users/ben/desktop/libre-ary/libreary/metadata/md_index.db"
     },
     "adapters":[{
-        "type":"local",
+        "type":"LocalAdapter",
         "id": "local2"
     },{
-        "type":"local",
+        "type":"LocalAdapter",
         "id": "local1"
+    },
+    {
+        "type":"S3Adapter",
+        "id": "s3"
     }
     ],
     "options": {

@@ -13,5 +13,5 @@
             "dropbox_dir": "dropbox",
             "output_dir": "retrieval"
         },
-        "canonical":true
+        "canonical":false
     }

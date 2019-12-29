@@ -250,4 +250,4 @@ if __name__ == '__main__':
     config = json.load(
         open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
     am = AdapterManager(config)
-    print(am.verify_adapter("local1"))
+    print(am.verify_adapter("s3"))
