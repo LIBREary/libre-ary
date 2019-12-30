@@ -106,17 +106,17 @@ class S3Adapter:
         return session
 
 
-    def store(resource_id):
+    def store(self, r_id):
         """
         Given a resource id, saves resource and returns confirmation.
 
-        Assumes file is stored as `filename` in `dropbox_dir`. AdapterManager will verify this
+        Assumes file is stored as `name` in `dropbox_dir`. AdapterManager will verify this
         """
         file_metadata = self.load_metadata(r_id)[0]
-        dropbox_path = file_metadata[2]
+        dropbox_path = file_metadata[1]
         checksum = file_metadata[4]
-        name = file_metadata[1]
-        current_location = "{}/{}".format(self.dropbox_dir, dropbox_path)
+        name = file_metadata[3]
+        current_location = "{}/{}".format(self.dropbox_dir, name)
 
         sha1Hash = hashlib.sha1(open(current_location,"rb").read())
         sha1Hashed = sha1Hash.hexdigest()
@@ -130,8 +130,8 @@ class S3Adapter:
             raise StorageFailedException
 
         if sha1Hashed == checksum:
-            locator = '{}_{}'.format(filename, resource_id)
-            self.s3.Bucket(self.bucket_name).upload_file(current_path, locator)
+            locator = '{}_{}'.format(name, r_id)
+            self.s3.Bucket(self.bucket_name).upload_file(current_location, locator)
         else:
             print("Checksum Mismatch")
             raise Exception
@@ -242,4 +242,4 @@ class S3Adapter:
 
     def load_metadata(self, r_id):
         return self.cursor.execute(
-            "select * from resources where id='{}'".format(r_id)).fetchall()
+            "select * from resources where uuid='{}'".format(r_id)).fetchall()

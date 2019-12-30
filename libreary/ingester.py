@@ -8,8 +8,6 @@ import json
 from libreary.adapter_manager import AdapterManager
 from libreary.config_parser import ConfigParser
 
-CONFIG_DIR = "config"
-
 class Ingester:
 
     def __init__(self, config):
@@ -19,6 +17,7 @@ class Ingester:
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.canonical_adapter_id = config["canonical_adapter"]
         self.canonical_adapter_type = config["canonical_adapter_id"]
+        self.config_dir = config["options"]["config_dir"]
 
     def ingest(self, current_file_path, levels, description, delete_after_store=False):
         """returns resource uuid"""
@@ -26,10 +25,11 @@ class Ingester:
         sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())
         checksum = sha1Hash.hexdigest()
 
-        parser = ConfigParser()
+        parser = ConfigParser(self.config_dir)
         canonical_adapter_config = parser.create_config_for_adapter(self.canonical_adapter_id, self.canonical_adapter_type)
 
-        canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id)
+
+        canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
 
         obj_uuid = str(uuid.uuid4())
 
@@ -44,11 +44,10 @@ class Ingester:
 
         self.conn.commit()
 
-        if delete_after_store:
-            pass
+        # If file is not in dropbox, copy it there
 
-        # Distribute initial copies
-        # self.adapter_manager.distribute_copies(obj_uuid)
+        if delete_after_store:
+            os.remove(current_file_path)
 
         return obj_uuid
 

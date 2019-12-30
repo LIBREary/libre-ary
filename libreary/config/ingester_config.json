@@ -4,7 +4,8 @@
             "db_file": "/Users/ben/desktop/libre-ary/libreary/metadata/md_index.db"
         },"options": {
             "dropbox_dir": "/Users/ben/Desktop/dropbox",
-            "output_dir": "/Users/ben/Desktop/retrieval"
+            "output_dir": "/Users/ben/Desktop/retrieval",
+            "config_dir":"/Users/ben/Desktop/libre-ary/libreary/config"
         },
         "canonical_adapter": "local1",
         "canonical_adapter_id":"LocalAdapter"

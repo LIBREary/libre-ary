@@ -39,11 +39,11 @@ class LocalAdapter():
 
         """
         file_metadata = self.load_metadata(r_id)[0]
-        dropbox_path = file_metadata[2]
+        dropbox_path = file_metadata[1]
         checksum = file_metadata[4]
-        name = file_metadata[1]
-        current_location = "{}/{}".format(self.dropbox_dir, dropbox_path)
-        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, dropbox_path))
+        name = file_metadata[3]
+        current_location = "{}/{}".format(self.dropbox_dir, name)
+        new_location = os.path.expanduser("{}/{}".format(self.dropbox_dir, name))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
         sha1Hash = hashlib.sha1(open(current_location,"rb").read())
@@ -161,7 +161,7 @@ class LocalAdapter():
 
     def load_metadata(self, r_id):
         return self.cursor.execute(
-            "select * from resources where id='{}'".format(r_id)).fetchall()
+            "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
     def get_actual_checksum(self, r_id):
         """

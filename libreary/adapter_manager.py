@@ -28,7 +28,8 @@ class AdapterManager:
         self.cursor = self.conn.cursor()
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.ret_dir = config["options"]["output_dir"]
-        self.levels = []
+        self.config_dir = config["options"]["config_dir"]
+        self.levels = {}
         self.adapters = {}
         self.canonical_adapter = self.config["canonical_adapter"]
         # Run this any time you expect levels and adapters to change
@@ -42,12 +43,12 @@ class AdapterManager:
 
     def get_all_levels(self):
         level_data = self.cursor.execute("select * from levels").fetchall()
-        levels = []
+        levels = {}
         for level in level_data:
-            levels.append({"id": level[0],
+            levels[level[1]] = {"id": level[0],
                            "name": level[1],
                            "frequency": level[2],
-                           "adapters": json.loads(level[3])})
+                           "adapters": json.loads(level[3])}
         return levels
 
     def _set_levels(self):
@@ -55,20 +56,27 @@ class AdapterManager:
 
     def get_all_adapters(self):
         """
-        Set up all of the adapters we will need.
+        Set up all of the adapters we will need, based on all levels that exist
 
         Ensure that self.levels is set properly before running this
         """
         adapters = {}
-        for level in self.levels:
+        for level in self.levels.values():
             # Each level may need several adapters
             for adapter in level["adapters"]:
                 adapters[adapter["id"]] = self.create_adapter(
-                    adapter["type"], adapter["id"])
+                    adapter["type"], adapter["id"], self.config_dir)
         return adapters
 
     def _set_adapters(self):
         self.adapters = self.get_all_adapters()
+
+    def set_additional_adapter(self, adapter_id, adapter_type):
+        """
+        Manually add an adapter to the pool of adapters
+        """
+        adapter = self.create_adapter(adapter_type, adapter_id)
+        self.adapters["adapter_id"] = adapter
 
     def verify_adapter(self, adapter_id):
         """
@@ -105,7 +113,8 @@ class AdapterManager:
 
         return r_val
 
-    def create_adapter(self, adapter_type, adapter_id):
+    @staticmethod
+    def create_adapter(adapter_type, adapter_id, config_dir):
         """
         Adapter factory type function.
         We want to be able to use adapter configs to create adapters.
@@ -113,13 +122,31 @@ class AdapterManager:
 
         :param adapter_type must be the name of a valid adapter class.
         """
-        parser = ConfigParser(self.config["config_dir"])
+        parser = ConfigParser(config_dir)
         cfg = parser.create_config_for_adapter(adapter_id, adapter_type)
         adapter = eval("{}({})".format(adapter_type, cfg))
         return adapter
 
-    def send_resource_to_adapters():
-        pass
+    def send_resource_to_adapters(self, r_id):
+        """
+        Sends a resource to all the places it should go.
+        """
+        resource_metadata = self.get_resource_metadata(r_id)[0]
+        levels = resource_metadata[2].split(",")
+        for level in levels:
+            adapters = self.get_adapters_by_level(level)
+            for adapter in adapters:
+                adapter.store(r_id)
+
+    def get_adapters_by_level(self, level):
+        """
+        Get a list of adapter objects based on a level0`    1
+        """
+        adapter_names = self.levels[level]["adapters"]
+        adapters = []
+        for adapter in adapter_names:
+            adapters.append(self.adapters[adapter["id"]])
+        return adapters
 
     def delete_resource_from_adapters():
         pass
@@ -234,8 +261,4 @@ class AdapterManager:
 
     def get_resource_metadata(self, r_id):
         return self.cursor.execute(
-            "select * from resources where id='{}'".format(r_id)).fetchall()
-
-    def get_level_info(self, l_id):
-        return self.cursor.execute(
-            "select * from levels where id=?", (l_id)).fetchone()
+            "select * from resources where uuid='{}'".format(r_id)).fetchall()
