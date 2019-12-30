@@ -21,3 +21,6 @@ class StorageFailedException:
 
 class OptionalModuleMissingException:
 	pass
+
+class ResourceNotIngestedException:
+	pass

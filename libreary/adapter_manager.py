@@ -131,7 +131,11 @@ class AdapterManager:
         """
         Sends a resource to all the places it should go.
         """
-        resource_metadata = self.get_resource_metadata(r_id)[0]
+        try:
+            resource_metadata = self.get_resource_metadata(r_id)[0]
+        except IndexError:
+            raise ResourceNotIngestedException
+    
         levels = resource_metadata[2].split(",")
         for level in levels:
             adapters = self.get_adapters_by_level(level)

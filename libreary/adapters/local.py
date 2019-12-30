@@ -43,7 +43,7 @@ class LocalAdapter():
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
-        new_location = os.path.expanduser("{}/{}".format(self.dropbox_dir, name))
+        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, name))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
         sha1Hash = hashlib.sha1(open(current_location,"rb").read())
