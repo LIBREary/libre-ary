@@ -29,7 +29,7 @@ class LocalAdapter():
         self.cursor = self.conn.cursor()
         self.storage_dir = config["adapter"]["storage_dir"]
         self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.adapter_type = "local"
+        self.adapter_type = "LocalAdapter"
         self.ret_dir = config["options"]["output_dir"]
 
     def store(self, r_id):
@@ -70,7 +70,7 @@ class LocalAdapter():
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_type, new_location, sha1Hashed, self.adapter_id, False])
+            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
     def retrieve(self, r_id):

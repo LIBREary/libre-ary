@@ -52,6 +52,13 @@ class Ingester:
         return obj_uuid
 
 
+    def verify_ingestion(self, r_id):
+        """
+        Make sure an object has been properly ingested.
+        """
+        pass
+
+
     def list_resources(self):
         return self.cursor.execute("select * from resources").fetchall()
 

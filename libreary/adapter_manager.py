@@ -135,7 +135,7 @@ class AdapterManager:
             resource_metadata = self.get_resource_metadata(r_id)[0]
         except IndexError:
             raise ResourceNotIngestedException
-    
+
         levels = resource_metadata[2].split(",")
         for level in levels:
             adapters = self.get_adapters_by_level(level)
@@ -152,17 +152,17 @@ class AdapterManager:
             adapters.append(self.adapters[adapter["id"]])
         return adapters
 
-    def delete_resource_from_adapters():
+    def delete_resource_from_adapters(self, r_id):
+        """Deletes a resource from all adapters it's stored in. 
+           Does not delete canonical copy
+        """
+
+    def change_resource_level(self, r_id, new_levels):
+        """
+        Removes all levels from a resource, replaces them with :param new_levels
+        """
         pass
 
-    def change_resource_level():
-        pass
-
-    def verify_ingestion():
-        """
-        Make sure an object has been properly ingested.
-        """
-        pass
 
     def summarize_copies(self, r_id):
         """

@@ -140,7 +140,7 @@ class S3Adapter:
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_type, locator, sha1Hashed, self.adapter_id, False])
+            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
     def _store_canonical(self, current_path, r_id, checksum, filename):
