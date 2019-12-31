@@ -11,4 +11,4 @@ config = json.load(
 am = AdapterManager(config)
 
 print(am.adapters)
-print(am.send_resource_to_adapters("b68c6bdb-8355-4ae9-bdba-078f87727ee8"))
+print(am.delete_resource_from_adapters("b68c6bdb-8355-4ae9-bdba-078f87727ee8"))

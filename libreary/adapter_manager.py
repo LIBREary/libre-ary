@@ -156,6 +156,17 @@ class AdapterManager:
         """Deletes a resource from all adapters it's stored in. 
            Does not delete canonical copy
         """
+        try:
+            resource_metadata = self.get_resource_metadata(r_id)[0]
+        except IndexError:
+            raise ResourceNotIngestedException
+
+        levels = resource_metadata[2].split(",")
+        for level in levels:
+            adapters = self.get_adapters_by_level(level)
+            for adapter in adapters:
+                adapter.delete(r_id)
+
 
     def change_resource_level(self, r_id, new_levels):
         """
