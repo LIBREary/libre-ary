@@ -108,7 +108,7 @@ class AdapterManager:
         if new_checksum == real_checksum:
             r_val = True
 
-        adapter.delete_canonical(r_id)
+        adapter._delete_canonical(r_id)
         os.remove(new_path)
         os.remove(dropbox_path)
 
@@ -299,10 +299,43 @@ class AdapterManager:
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
     def restore_canonical_copy(self, r_id):
-        print(self.canonical_adapter)
+        """
+        Restore a detected fault when the canonical adapter has a resource that doesn't match
+        """
+        try:
+            resource_info = self.get_resource_metadata(r_id)
+            real_checksum = resource_info[4]
+            levels = resource_info[2].split(",")
+            filename = resource_info[3]
+        except IndexError:
+            raise ResourceNotIngestedException
+
+        self.adapters[self.canonical_adapter]._delete_canonical(r_id)
+        
+        current_location = 0
+
+        try:
+            for level in levels:
+                adapters = self.get_adapters_by_level(level)
+                for adapter in adapters:
+                    try:
+                        current_location = adapter.retrieve(r_id)
+                        raise AdapterRestored
+                    except ResourceNotIngestedException:
+                        continue
+                    except ChecksumMismatchException:
+                        continue
+                    except NoCopyExistsException:
+                        continue
+        except AdapterRestored:
+            self.adapters[self.canonical_adapter].store_canonical(current_location, r_id, real_checksum, filename)
 
     def restore_from_canonical_copy(self, adapter_id, r_id):
-        pass
+        """
+        To restore from the canonical copy, we can simply delete and re-ingest
+        """
+        self.adapters[adapter_id].delete(r_id)
+        self.adapters[adapter_id].store(r_id)
 
     def compare_copies(self, r_id, adapter_id_1, adapter_id_2, deep=False):
         try:

@@ -214,7 +214,7 @@ class S3Adapter:
                             [copy_info[0]])
         self.conn.commit()
 
-    def delete_canonical(self, r_id):
+    def _delete_canonical(self, r_id):
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]

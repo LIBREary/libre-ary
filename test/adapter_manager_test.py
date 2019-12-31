@@ -10,7 +10,8 @@ config = json.load(
         open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
 am = AdapterManager(config)
 
-print(am.adapters)
-print(am.send_resource_to_adapters("1277ccb6-051c-458d-9250-570b6e085d79"))
-print(am.retrieve_by_preference("1277ccb6-051c-458d-9250-570b6e085d79"))
-am.delete_resource_from_adapters("1277ccb6-051c-458d-9250-570b6e085d79") 
+# print(am.adapters)
+# print(am.send_resource_to_adapters("1277ccb6-051c-458d-9250-570b6e085d79"))
+# print(am.retrieve_by_preference("1277ccb6-051c-458d-9250-570b6e085d79"))
+# am.delete_resource_from_adapters("1277ccb6-051c-458d-9250-570b6e085d79") 
+print(am.restore_canonical_copy("1277ccb6-051c-458d-9250-570b6e085d79"))
