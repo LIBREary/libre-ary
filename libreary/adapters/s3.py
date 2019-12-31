@@ -127,7 +127,7 @@ class S3Adapter:
             r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
-            raise StorageFailedException
+            return
 
         if sha1Hashed == checksum:
             locator = '{}_{}'.format(name, r_id)
@@ -157,7 +157,7 @@ class S3Adapter:
         sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format( str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
-            print("Other copies from this adapter exist")
+            print("Other canonical copies from this adapter exist")
             raise StorageFailedException
 
         if sha1Hashed == checksum:

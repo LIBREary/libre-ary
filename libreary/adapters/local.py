@@ -60,7 +60,7 @@ class LocalAdapter():
             r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
-            raise StorageFailedException
+            return
 
         if sha1Hashed == checksum:
             copyfile(current_location, new_location)
@@ -116,7 +116,7 @@ class LocalAdapter():
         sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format( str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
-            print("Other copies from this adapter exist")
+            print("Other canonical copies from this adapter exist")
             raise StorageFailedException
 
         if sha1Hashed == checksum:
@@ -136,7 +136,14 @@ class LocalAdapter():
     def delete(self, r_id):
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
+            (r_id, self.adapter_id)).fetchall()
+
+        if len(copy_info) == 0:
+            # We've already deleted, probably as part of another level
+            return
+
+        copy_info = copy_info[0]
+
         expected_hash = copy_info[4]
         copy_path = copy_info[3]
 
