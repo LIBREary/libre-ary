@@ -3,6 +3,7 @@ import os
 import string
 import random
 import hashlib
+import shutil
 
 import sqlite3
 
@@ -136,6 +137,25 @@ class AdapterManager:
         except IndexError:
             raise ResourceNotIngestedException
 
+        # Make sure that resource is in dropbox:
+        filename = resource_metadata[3]
+        expected_location = "{}/{}".format(self.dropbox_dir, filename)
+
+        file_there = False
+        if os.path.isfile(expected_location):
+            file_hash = hashlib.sha1(open(current_path, "rb").read()).hexdigest()
+            expected_hash = resource_metadata[4]
+            if file_hash == expected_hash:
+                # there's a file in that location, and its checksum matches
+                file_there = True
+        
+        # If the file isn't where we want it, put it there
+        if not file_there:
+            # retrieve moves it to the retrieval dir
+            current_path = self.adapters[self.canonical_adapter].retrieve(r_id)
+            # so we move it to the dropbox_dir
+            shutil.move(current_path, expected_location)
+
         levels = resource_metadata[2].split(",")
         for level in levels:
             adapters = self.get_adapters_by_level(level)
@@ -144,7 +164,7 @@ class AdapterManager:
 
     def get_adapters_by_level(self, level):
         """
-        Get a list of adapter objects based on a level0`    1
+        Get a list of adapter objects based on a level
         """
         adapter_names = self.levels[level]["adapters"]
         adapters = []
@@ -172,7 +192,18 @@ class AdapterManager:
         """
         Removes all levels from a resource, replaces them with :param new_levels
         """
-        pass
+        
+        # Because d_r_f_a doesn't delete canonical copy, we can simply use
+        # it to reset
+        self.delete_resource_from_adapters(r_id)
+        sql = "update resources set levels = '?' where uuid=?"
+        self.cursor.execute(sql, (r_id, ",".join([l for l in new_levels])))
+        self.conn.commit()
+        # now that we've updated the levels, we refresh levels
+        self.reload_levels_adapters()
+        # now, we can just act as if it has never been sent off:
+        self.send_resource_to_adapters(r_id)
+
 
 
     def summarize_copies(self, r_id):
@@ -212,7 +243,7 @@ class AdapterManager:
                 self.restore_from_canonical_copy(adapter.adapter_id, r_id)
 
     def restore_canonical_copy(self, r_id):
-        pass
+        print(self.canonical_adapter)
 
     def restore_from_canonical_copy(self, adapter_id, r_id):
         pass
