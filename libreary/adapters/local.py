@@ -74,6 +74,11 @@ class LocalAdapter():
         self.conn.commit()
 
     def retrieve(self, r_id):
+        try:
+            filename = self.load_metadata(r_id)[0][3]
+        except IndexError:
+            raise ResourceNotIngestedException
+
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -81,7 +86,7 @@ class LocalAdapter():
         copy_path = copy_info[3]
         real_hash = copy_info[4]
 
-        new_location = "{}/{}".format(self.ret_dir, r_id)
+        new_location = "{}/{}".format(self.ret_dir, filename)
 
         if real_hash == expected_hash:
             copyfile(copy_path, new_location)
@@ -101,7 +106,7 @@ class LocalAdapter():
         """
         current_location = current_path
         name = filename
-        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, filename))
+        new_location = os.path.expanduser("{}/{}_canonical".format(self.storage_dir, filename))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
         sha1Hash = hashlib.sha1(open(current_location,"rb").read())

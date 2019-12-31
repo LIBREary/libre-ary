@@ -152,7 +152,7 @@ class S3Adapter:
         sha1Hash = hashlib.sha1(open(current_location,"rb").read())
         sha1Hashed = sha1Hash.hexdigest()
            
-        locator = "{}_{}".format(filename, r_id) 
+        locator = "{}_{}_canonical".format(filename, r_id) 
 
         sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format( str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
@@ -175,6 +175,11 @@ class S3Adapter:
 
 
     def retrieve(self, r_id):
+        try:
+            filename = self.load_metadata(r_id)[0][3]
+        except IndexError:
+            raise ResourceNotIngestedException
+
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -182,7 +187,7 @@ class S3Adapter:
         copy_locator = copy_info[3]
         real_hash = copy_info[4]
 
-        new_location = "{}/{}".format(self.ret_dir, r_id)
+        new_location = "{}/{}".format(self.ret_dir, filename)
 
         if real_hash == expected_hash:
             self.s3.Bucket(self.bucket_name).download_file(copy_locator, new_location)

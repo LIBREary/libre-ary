@@ -143,7 +143,7 @@ class AdapterManager:
 
         file_there = False
         if os.path.isfile(expected_location):
-            file_hash = hashlib.sha1(open(current_path, "rb").read()).hexdigest()
+            file_hash = hashlib.sha1(open(expected_location, "rb").read()).hexdigest()
             expected_hash = resource_metadata[4]
             if file_hash == expected_hash:
                 # there's a file in that location, and its checksum matches
@@ -219,9 +219,6 @@ class AdapterManager:
             r_id)
         return self.cursor.execute(sql).fetchall()
 
-    def compare_copies(self, r_id, adapter_id_1, adapter_id_2):
-        pass
-
     def retrieve_by_preference(self, r_id):
         """
         get a copy of a file, preferring canonical adapter, perhaps then enforcing some preference hierarchy
@@ -229,27 +226,19 @@ class AdapterManager:
         """
         # First, try the canonical copy:
         try:
-            self.adapters[self.canonical_adapter].retrieve(r_id)
+            new_loc = self.adapters[self.canonical_adapter].retrieve(r_id)
+            return new_loc
         except ChecksumMismatchException:
             print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
             self.restore_canonical_copy(r_id)
 
         for adapter in self.adapters.values():
             try:
-                adapter.retrieve(r_id)
-                return True
+                new_loc = adapter.retrieve(r_id)
+                return new_loc
             except ChecksumMismatchException:
                 print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
                 self.restore_from_canonical_copy(adapter.adapter_id, r_id)
-
-    def restore_canonical_copy(self, r_id):
-        print(self.canonical_adapter)
-
-    def restore_from_canonical_copy(self, adapter_id, r_id):
-        pass
-
-    def update_checksum(resource_id, adapter_id):
-        pass
 
     def check_single_resource_single_adapter(self, r_id, adapter_id):
         resource_info = self.get_resource_metadata(r_id)
@@ -308,3 +297,12 @@ class AdapterManager:
     def get_resource_metadata(self, r_id):
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
+
+    def restore_canonical_copy(self, r_id):
+        print(self.canonical_adapter)
+
+    def restore_from_canonical_copy(self, adapter_id, r_id):
+        pass
+
+    def compare_copies(self, r_id, adapter_id_1, adapter_id_2, deep=False):
+        pass
