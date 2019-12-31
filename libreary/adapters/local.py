@@ -78,10 +78,12 @@ class LocalAdapter():
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
             raise ResourceNotIngestedException
-
-        copy_info = self.cursor.execute(
+        try:
+            copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
+        except IndexError:
+            raise NoCopyExistsException
         expected_hash = copy_info[4]
         copy_path = copy_info[3]
         real_hash = copy_info[4]

@@ -15,7 +15,7 @@ class AdapterManager:
     """
     The AdapterManager is responsible for all interaction with adapters, except for intial ingestion.
 
-    It will be able to keep track of all of the adapters we have, do integrity checks on them,
+    It is able to keep track of all of the adapters we have, do integrity checks on them,
     perform initial distribution, compare versions from different adapters, and make insert and delete calls.
 
     This is useful to keep the base Libreary class as simple as possible.
@@ -305,4 +305,23 @@ class AdapterManager:
         pass
 
     def compare_copies(self, r_id, adapter_id_1, adapter_id_2, deep=False):
-        pass
+        try:
+            copy_info_1 = copy_info = self.cursor.execute(
+                "select * from copies where resource_id=? and adapter_identifier=? limit 1",
+                (r_id, adapter_id_1)).fetchall()[0]
+            copy_info_1 = copy_info = self.cursor.execute(
+                "select * from copies where resource_id=? and adapter_identifier=? limit 1",
+                (r_id, adapter_id_2)).fetchall()[0]
+        except IndexError:
+            raise NoCopyExistsException
+
+        if not deep:
+            return copy_info_1[4] == copy_info_2[4]
+
+        return self.adapters[adapter_id_1].get_actual_checksum(r_id) == self.adapters[adapter_id_2].get_actual_checksum(r_id)
+
+    def verify_copy(self, r_id, adapter_id, deep=False):
+        """
+        Determine whether a copy matches the canonical copy
+        """
+        return self.compare_copies(r_id, adapter_id, self.canonical_adapter, deep=deep)

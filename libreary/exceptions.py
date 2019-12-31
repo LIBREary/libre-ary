@@ -24,3 +24,7 @@ class OptionalModuleMissingException:
 
 class ResourceNotIngestedException:
 	pass
+
+class NoCopyExistsException:
+	pass
+	
