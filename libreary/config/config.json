@@ -1,0 +1,23 @@
+{
+    "metadata": {
+        "db_file": "/Users/ben/desktop/libre-ary/libreary/metadata/md_index.db"
+    },
+    "adapters":[{
+        "type":"LocalAdapter",
+        "id": "local2"
+    },{
+        "type":"LocalAdapter",
+        "id": "local1"
+    },
+    {
+        "type":"S3Adapter",
+        "id": "s3"
+    }
+    ],
+    "options": {
+        "dropbox_dir": "/Users/ben/Desktop/dropbox",
+        "output_dir": "/Users/ben/Desktop/retrieval",
+        "config_dir": "/Users/ben/desktop/libre-ary/libreary/config"
+    },
+    "canonical_adapter":"local1"
+}

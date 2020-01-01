@@ -16,7 +16,7 @@ class Ingester:
         self.cursor = self.conn.cursor()
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.canonical_adapter_id = config["canonical_adapter"]
-        self.canonical_adapter_type = config["canonical_adapter_id"]
+        self.canonical_adapter_type = config["canonical_adapter"]
         self.config_dir = config["options"]["config_dir"]
 
     def ingest(self, current_file_path, levels, description, delete_after_store=False):
