@@ -6,7 +6,6 @@ import uuid
 import json
 
 from libreary.adapter_manager import AdapterManager
-from libreary.config_parser import ConfigParser
 
 class Ingester:
 
@@ -54,10 +53,6 @@ class Ingester:
         filename = current_file_path.split("/")[-1]
         sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())
         checksum = sha1Hash.hexdigest()
-
-        parser = ConfigParser(self.config_dir)
-        canonical_adapter_config = parser.create_config_for_adapter(self.canonical_adapter_id, self.canonical_adapter_type)
-
 
         canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
 
@@ -113,10 +108,6 @@ class Ingester:
         """
         resource_info = self.cursor.execute("select * from resources where id=?", (r_id,))
         canonical_checksum =  resource_info[4]
-
-        
-        parser = ConfigParser(self.config_dir)
-        canonical_adapter_config = parser.create_config_for_adapter(self.canonical_adapter_id, self.canonical_adapter_type)
 
         canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
         checksum = canonical_adapter.get_actual_checksum(r_id)

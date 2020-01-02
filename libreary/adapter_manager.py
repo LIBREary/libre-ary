@@ -231,10 +231,31 @@ class AdapterManager:
         :param config_dir - configuration directory. Must contain a file called 
             `{adapter_id}_config.json`
         """
-        parser = ConfigParser(config_dir)
-        cfg = parser.create_config_for_adapter(adapter_id, adapter_type)
+        cfg = AdapterManager.create_config_for_adapter(adapter_id, adapter_type, config_dir)
         adapter = eval("{}({})".format(adapter_type, cfg))
         return adapter
+
+    @staticmethod
+    def create_config_for_adapter(self, adapter_id, adapter_type, config_dir):
+        """
+        Static method for creating an adapter configuration. This is necessary for 
+        the adapter factory.
+
+        :param adapter_type - must be the name of a valid adapter class.
+        :param adapter_id - the identifier you want to label this adapter with
+        :param config_dir - configuration directory. Must contain a file called 
+            `{adapter_id}_config.json`
+        """
+        base_config = json.load(open("{}/{}_config.json".format(config_dir, adapter_id)))
+        general_config = json.load(open("{}/agent_config.json".format(config_dir)))
+        
+        full_adapter_conf = {}
+        full_adapter_conf["adapter"] = base_config["adapter"]
+        full_adapter_conf["adapter"]["adapter_type"] = adapter_type
+        full_adapter_conf["metadata"] = general_config["metadata"]
+        full_adapter_conf["options"] = general_config["options"]
+
+        return full_adapter_conf
 
     def send_resource_to_adapters(self, r_id, delete_after_send=False):
         """
