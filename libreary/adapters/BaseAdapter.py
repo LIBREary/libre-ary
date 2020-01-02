@@ -85,7 +85,8 @@ class BaseAdapter:
         Delete the corresponding entry in the `copies` table.
         
         :param r_id - the resource to retrieve's UUID
-        """        pass
+        """
+        pass
 
     def get_actual_checksum(self, r_id):
         """
