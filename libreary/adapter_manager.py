@@ -128,7 +128,7 @@ class AdapterManager:
         adapter = eval("{}({})".format(adapter_type, cfg))
         return adapter
 
-    def send_resource_to_adapters(self, r_id):
+    def send_resource_to_adapters(self, r_id, delete_after_send=False):
         """
         Sends a resource to all the places it should go.
         """
@@ -161,6 +161,9 @@ class AdapterManager:
             adapters = self.get_adapters_by_level(level)
             for adapter in adapters:
                 adapter.store(r_id)
+
+        if delete_after_send:
+            os.remove(expected_location)
 
     def get_adapters_by_level(self, level):
         """
