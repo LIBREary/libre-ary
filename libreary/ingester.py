@@ -11,6 +11,29 @@ from libreary.config_parser import ConfigParser
 class Ingester:
 
     def __init__(self, config):
+        """
+        Constructor for the Ingester object. This object can be created manually, but
+        in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict 
+        :param config, which should be structured as follows:
+        ```{json}
+        {
+                "metadata": {
+                    "db_file": "path to SQLite3 DB file for metadata"
+                },
+                "adapters": # List of adapters - each entry should look like:
+                [{
+                    "type":"AdapterType (name of class)",
+                    "id": "Adapter Identifier"
+                }],
+                "options": {
+                    "dropbox_dir": "Path to dropbox directory, where files you want to ingest should be placed",
+                    "output_dir": "Path to directory you want files to be retrieved to",
+                    "config_dir": "Path to config directory"
+                },
+                "canonical_adapter":"Adapter Identifier for Canonical Adapter"
+            }
+        ```
+        """
         self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
