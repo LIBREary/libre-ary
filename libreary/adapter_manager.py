@@ -474,7 +474,6 @@ class AdapterManager:
         Get a summary of information about a resource. That summary includes:
 
         `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
-        for each copy
 
         This method trusts the metadata database. There should be a separate method to
         verify the metadata db so that we know we can trust this info

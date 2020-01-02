@@ -43,7 +43,14 @@ class Ingester:
         self.config_dir = config["options"]["config_dir"]
 
     def ingest(self, current_file_path, levels, description, delete_after_store=False):
-        """returns resource uuid"""
+        """
+        Ingest an object to LIBREary. This method:
+        - Creates the canonical copy of the object
+        - Creates the entry in the `resources` table describing the resource
+        - Optionally, delete the file out of the dropbox dir.
+
+        :param current_file_path - 
+        """
         filename = current_file_path.split("/")[-1]
         sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())
         checksum = sha1Hash.hexdigest()
@@ -78,26 +85,46 @@ class Ingester:
     def verify_ingestion(self, r_id):
         """
         Make sure an object has been properly ingested.
+
+        :param r_id - the UUID of the resource you are verifying
         """
         pass
 
 
     def list_resources(self):
+        """
+        Return a list of summaries of each resource. This summary includes:
+
+        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
+        """
         return self.cursor.execute("select * from resources").fetchall()
 
     def delete_resource(self, r_id):
+        """
+        Delete a resource from the LIBREary. 
+
+        This method deletes the canonical copy and removes the corresponding entry in the `resources`
+            table.
+
+        :param r_id - the UUID of the resouce you're deleting
+        """
         resource_info = self.cursor.execute("select * from resources where id=?", (r_id,))
-        canonical_path = "{}/{}".format(self.dropbox_dir, resource_info[2])
         canonical_checksum =  resource_info[4]
 
-        sha1Hash = hashlib.sha1(open(canonical_path,"rb").read())
-        checksum = sha1Hash.hexdigest()
+        
+        parser = ConfigParser(self.config_dir)
+        canonical_adapter_config = parser.create_config_for_adapter(self.canonical_adapter_id, self.canonical_adapter_type)
+
+        canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+        checksum = canonical_adapter.get_actual_checksum(r_id)
 
         if checksum == canonical_checksum:
-            os.remove(canonical_path)
+            canonical_adapter._delete_canonical(r_id)
         else:
             print("Checksum Mismatch")
 
         self.cursor.execute("delete from resources where id=?", (r_id,))
-
         self.conn.commit()
