@@ -7,7 +7,11 @@ import json
 CONFIG_DIR = "../config"
 
 class LocalAdapter():
-    """docstring for LocalAdapter
+    """
+        An Adapter allows LIBREary to save copies of digital objects 
+            to different places across cyberspace. Working with many
+            adapters in concert, one should be able do save sufficient
+            copies to places they want them.
         
         LocalAdapter is a basic adapter which saves files 
         to a local directory specified in the adapter's config
@@ -17,12 +21,36 @@ class LocalAdapter():
         commonly used adapter.
 
         It's also very nice to use for testing, as saving files is easy (ish)
-        to debug and doesn't cost any money (unlike a cloud service)
+        to debug and doesn't cost any money (unlike a cloud service) or have
+        any configuration difficulty.
     """
 
     
 
     def __init__(self, config):
+        """
+        Constructor for LocalAdapter. Expects a python dict :param `config` 
+            in the following format:
+
+        ```{json}
+        {
+        "metadata": {
+            "db_file": "path to metadata db"
+        },
+        "adapter": {
+            "storage_dir": "Directory to store objects in",
+            "adapter_identifier": "Friendly identifier",
+            "adapter_type": "LocalAdapter"
+        },
+        "options": {
+            "dropbox_dir": "path to dropbox directory",
+            "output_dir": "path to output directory"
+        },
+        "canonical":"(boolean) true if this is the canonical adapter"
+        }
+        ```
+
+        """
         self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
         self.adapter_id = config["adapter"]["adapter_identifier"]
         self.conn = sqlite3.connect(self.metadata_db)
@@ -34,9 +62,12 @@ class LocalAdapter():
 
     def store(self, r_id):
         """
-        Store assumes that the file is in the dropbox_dir
-        Is this ok? if so, do we just have AdapterManager take care of this?
+        Store a copy of a resource in this adapter.
 
+        Store assumes that the file is in the `dropbox_dir`. 
+        AdapterManager will always verify that this is the case.
+        
+        :param r_id - the resource to store's UUID
         """
         file_metadata = self.load_metadata(r_id)[0]
         dropbox_path = file_metadata[1]
@@ -74,6 +105,18 @@ class LocalAdapter():
         self.conn.commit()
 
     def retrieve(self, r_id):
+        """
+        Retrieve a copy of a resource from this adapter.
+
+        Retrieve assumes that the file can be stored to the `output_dir`. 
+        AdapterManager will always verify that this is the case.
+
+        Returns the path to the resource.
+
+        May overwrite files in the `output_dir`
+        
+        :param r_id - the resource to retrieve's UUID
+        """
         try:
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
@@ -97,14 +140,29 @@ class LocalAdapter():
             
         return new_location
 
-    def update(self, r_id, updated):
+    def update(self, r_id, updated_path):
+        """
+        Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
+
+        :param r_id - the UUID of the object you'd like to update
+        :param updated_path - path to the contents of the updated object.
+
+        """
         pass
 
     def _store_canonical(self, current_path, r_id, checksum, filename):
         """
+            Store a canonical copy of a resource in this adapter.
+
             If we're using the LocalAdapter as a canonical adapter, we need
             to be able to store from a current path, taking in a generated UUID,
             rather than looking info up from the database.
+
+            :param current_path - current path to object
+            :param r_id - UUID of resource you're storing
+            :param checksum - checksum of resource
+            :param filename - filename of resource you're storing
+
         """
         current_location = current_path
         name = filename
@@ -141,6 +199,12 @@ class LocalAdapter():
         return new_location
 
     def delete(self, r_id):
+        """
+        Delete a copy of a resource from this adapter.
+        Delete the corresponding entry in the `copies` table.
+        
+        :param r_id - the resource to retrieve's UUID
+        """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()
@@ -161,6 +225,12 @@ class LocalAdapter():
         self.conn.commit()
 
     def _delete_canonical(self, r_id):
+        """
+        Delete a canonical copy of a resource from this adapter.
+        Delete the corresponding entry in the `copies` table.
+        
+        :param r_id - the resource to retrieve's UUID
+        """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -174,12 +244,28 @@ class LocalAdapter():
         self.conn.commit()
 
     def load_metadata(self, r_id):
+        """
+        Get a summary of information about a resource. That summary includes:
+
+        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
+
+        :param r_id - UUID of resource you'd like to learn about
+        """
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
     def get_actual_checksum(self, r_id):
         """
-        Return an exact checksum of a resource, not relying on the metadata db
+        Returns an exact checksum of a resource, not relying on the metadata db.
+        
+        If possible, implementations of get_actual_checksum should do no file I/O.
+            In the case of LocalAdapter, we're able to do this without copying files
+            around.
+
+        :param r_id - resource we want the checksum of
         """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",

@@ -15,13 +15,40 @@ else:
 CONFIG_DIR = "../config"
 
 class S3Adapter:
+    """
+        An Adapter allows LIBREary to save copies of digital objects 
+            to different places across cyberspace. Working with many
+            adapters in concert, one should be able do save sufficient
+            copies to places they want them.
+        
+        S3Adapter allows users to store objects in AWS S3.
+    """
 
     def __init__(self, config):
         """
-        This should handle configuration (auth, etc.) and set up the
-        metadata db connection
+        Constructor for S3Adapter. Expects a python dict :param `config` 
+            in the following format:
 
-        You must have already created the S3 bucket for this to work.
+        You must have already created the S3 bucket you wish to use for this to work.
+
+        ```{json}
+        {
+        "metadata": {
+            "db_file": "path to metadata db"
+        },
+        "adapter": {
+            "bucket_name": "name of S3 bucket",
+            "adapter_identifier": "friendly identifier",
+            "adapter_type": "S3Adapter",
+            "region": "AWS Region",
+            "key_file":"Path to optional AWS key file. See create_session docs for more"
+        },
+        "options": {
+            "dropbox_dir": "path to dropbox directory",
+            "output_dir": "path to output directory"
+        },
+        "canonical":"(boolean) true if this is the canonical adapter"
+        }
         """
         self.config = config
 
@@ -64,6 +91,7 @@ class S3Adapter:
 
     def create_session(self):
         """Create a session.
+
         First we look in self.key_file for a path to a json file with the
         credentials. The key file should have 'AWSAccessKeyId' and 'AWSSecretKey'.
         Next we look at self.profile for a profile name and try
@@ -108,10 +136,14 @@ class S3Adapter:
 
     def store(self, r_id):
         """
-        Given a resource id, saves resource and returns confirmation.
+        Store a copy of a resource in this adapter.
 
-        Assumes file is stored as `name` in `dropbox_dir`. AdapterManager will verify this
+        Store assumes that the file is in the `dropbox_dir`. 
+        AdapterManager will always verify that this is the case.
+        
+        :param r_id - the resource to store's UUID
         """
+
         file_metadata = self.load_metadata(r_id)[0]
         dropbox_path = file_metadata[1]
         checksum = file_metadata[4]
@@ -145,7 +177,17 @@ class S3Adapter:
 
     def _store_canonical(self, current_path, r_id, checksum, filename):
         """
-        Ingest files as the canonical adapter. Don't run this function. Ingester will call it.
+            Store a canonical copy of a resource in this adapter.
+
+            If we're using the S3Adapter as a canonical adapter, we need
+            to be able to store from a current path, taking in a generated UUID,
+            rather than looking info up from the database.
+
+            :param current_path - current path to object
+            :param r_id - UUID of resource you're storing
+            :param checksum - checksum of resource
+            :param filename - filename of resource you're storing
+
         """
         current_location = current_path
 
@@ -175,6 +217,18 @@ class S3Adapter:
 
 
     def retrieve(self, r_id):
+        """
+        Retrieve a copy of a resource from this adapter.
+
+        Retrieve assumes that the file can be stored to the `output_dir`. 
+        AdapterManager will always verify that this is the case.
+
+        Returns the path to the resource.
+
+        May overwrite files in the `output_dir`
+        
+        :param r_id - the resource to retrieve's UUID
+        """
         try:
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
@@ -196,13 +250,23 @@ class S3Adapter:
             
         return new_location
 
-    def update(resource_id, updated):
+    def update(resource_id, updated_path):
         """
-        Overwrite the remote resource specified with what's passed into :param updated.
+        Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
+
+        :param r_id - the UUID of the object you'd like to update
+        :param updated_path - path to the contents of the updated object.
+
         """
         pass
 
     def delete(self, r_id):
+        """
+        Delete a copy of a resource from this adapter.
+        Delete the corresponding entry in the `copies` table.
+        
+        :param r_id - the resource to retrieve's UUID
+        """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -215,6 +279,12 @@ class S3Adapter:
         self.conn.commit()
 
     def _delete_canonical(self, r_id):
+        """
+        Delete a canonical copy of a resource from this adapter.
+        Delete the corresponding entry in the `copies` table.
+        
+        :param r_id - the resource to retrieve's UUID
+        """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -229,11 +299,14 @@ class S3Adapter:
 
     def get_actual_checksum(self, r_id, delete_after_download=True):
         """
-        Return an exact checksum of a resource, not relying on the metadata db
+        Returns an exact checksum of a resource, not relying on the metadata db.
+        
+        If possible, implementations of get_actual_checksum should do no file I/O.
+            For S3, we need to download and checksum manually. :/
 
-        If possible, this should be done with no file I/O
-
-        For S3, we need to download and checksum manually. :/
+        :param r_id - resource we want the checksum of
+        :param delete_after_download - True if the file should be downloaded after the 
+            checksum is calculated
         """
         new_path = self.retrieve("r_id")
 
@@ -246,5 +319,15 @@ class S3Adapter:
         return sha1Hashed
 
     def load_metadata(self, r_id):
+        """
+        Get a summary of information about a resource. That summary includes:
+
+        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
+
+        :param r_id - UUID of resource you'd like to learn about
+        """
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
