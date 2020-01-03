@@ -18,6 +18,8 @@ LIBREary is flexible - objects can have their levels changed as necessary, level
 
 The LIBREary configuration process is relatively simple, and getting started with LIBREary should only take a few minutes.
 
+An example of the configuration can be found in the `libre-ary/config` directory.
+
 ## How do I install LIBREary?
 
 LIBREary is a python package, and can be istalled using python3's setup tools. First, make sure you have python3 installed on your system. Then:
