@@ -52,7 +52,7 @@ Git commit messages should include a single summary sentence followed by a more 
 Credit and Contributions
 ----------------------
 
-We want to make sure that all contributors get credit for their contributions.  When you make your first contribution, it should include updating the codemeta.json file to include yourself as a contributor to the project.
+We want to make sure that all contributors get credit for their contributions.  When you make your first contribution, it should include updating the `codemeta.json` file to include yourself as a contributor to the project.
 
 Discussion and Support
 ----------------------
