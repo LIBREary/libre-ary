@@ -1,30 +1,42 @@
 class IngestionFailedException(Exception):
-	pass
+    pass
+
 
 class ChecksumMismatchException(Exception):
-	pass
+    pass
+
 
 class MetadataUnavailableException(Exception):
-	pass
+    pass
+
 
 class AdapterConnectionFailureException(Exception):
-	pass
+    pass
 
-class RestorationFailedException:
-	pass
 
-class AdapterCreationFailedException:
-	pass
+class RestorationFailedException(Exception):
+    pass
 
-class StorageFailedException:
-	pass
 
-class OptionalModuleMissingException:
-	pass
+class AdapterCreationFailedException(Exception):
+    pass
 
-class ResourceNotIngestedException:
-	pass
 
-class NoCopyExistsException:
-	pass
-	
+class StorageFailedException(Exception):
+    pass
+
+
+class OptionalModuleMissingException(Exception):
+    pass
+
+
+class ResourceNotIngestedException(Exception):
+    pass
+
+
+class NoCopyExistsException(Exception):
+    pass
+
+
+class AdapterRestored(Exception):
+    pass

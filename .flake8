@@ -1,0 +1,15 @@
+[flake8]
+# E124: closing bracket does not match visual indentation
+# E126: continuation line over-indented for hanging indent
+# This one is bad. Sometimes ordering matters, conditional imports
+# setting env vars necessary etc.
+# E402: module level import not at top of file
+# E129: Visual indent to not match indent as next line, counter eg here:
+# https://github.com/PyCQA/pycodestyle/issues/386
+# W504: line break after binary operator
+#       (Raised by flake8 even when it is followed)
+# F401: Factory methods require importing of constructors even when not
+# 		directly in source code, ex. AdapterManager
+# F403: Star imports for exceptions currently acceptable. WIll remove this soon.
+ignore = E124, E126, F401, F403, E402, E129, W504
+max-line-length = 160

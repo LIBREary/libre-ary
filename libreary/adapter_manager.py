@@ -7,9 +7,11 @@ import shutil
 
 import sqlite3
 
-from libreary.config_parser import ConfigParser
 from libreary.adapters.local import LocalAdapter
 from libreary.adapters.s3 import S3Adapter
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
+from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored
+
 
 class AdapterManager:
     """
@@ -18,7 +20,7 @@ class AdapterManager:
     It is able to keep track of all of the adapters we have, do integrity checks on them,
     perform initial distribution, compare versions from different adapters, and make insert and delete calls.
 
-    The Adapter Manager is responsible for most of the operation of ingestion, deletion, and management of 
+    The Adapter Manager is responsible for most of the operation of ingestion, deletion, and management of
     digital objects within LIBREary. Most customization will occur by subclassing the AdapterManager.
 
     This class currently contains the following methods:
@@ -47,7 +49,7 @@ class AdapterManager:
     def __init__(self, config):
         """
         Constructor for the AdapterManager object. This object can be created manually, but
-        in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict 
+        in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
         :param config, which should be structured as follows:
         ```{json}
         {
@@ -88,9 +90,9 @@ class AdapterManager:
         """
         Set the `self.adapters` and `self.levels` instance variables.
 
-        This object needs to be stateful in this way because each adapter might 
+        This object needs to be stateful in this way because each adapter might
         either require time-sensitive authentication information (tokens, etc), or
-        may be computationally expensive to create. For this reason, we want the 
+        may be computationally expensive to create. For this reason, we want the
         `AdapterManager` to have instance variables with adapter objects.
         """
         self._set_levels()
@@ -98,7 +100,7 @@ class AdapterManager:
 
     def get_all_levels(self):
         """
-        Returns all levels in the metadata database. 
+        Returns all levels in the metadata database.
 
         Returns a list of dictionaries each with the following format:
         ```
@@ -112,9 +114,9 @@ class AdapterManager:
         levels = {}
         for level in level_data:
             levels[level[1]] = {"id": level[0],
-                           "name": level[1],
-                           "frequency": level[2],
-                           "adapters": json.loads(level[3])}
+                                "name": level[1],
+                                "frequency": level[2],
+                                "adapters": json.loads(level[3])}
         return levels
 
     def _set_levels(self):
@@ -175,7 +177,7 @@ class AdapterManager:
         :param adapter_id - the adapter ID of the adapter you're creating
             There should be a matching config file for this adapter ID
 
-        :param adapter_type - the type of the adapter you wish to create. 
+        :param adapter_type - the type of the adapter you wish to create.
             Must be the actual class name, i.e. "LocalAdapter".
         """
         adapter = self.create_adapter(adapter_type, adapter_id)
@@ -184,10 +186,10 @@ class AdapterManager:
 
     def verify_adapter(self, adapter_id):
         """
-        Make sure an adapter is working. To do this, we store, retrieve, 
-        and delete a file that we know the contents of, 
+        Make sure an adapter is working. To do this, we store, retrieve,
+        and delete a file that we know the contents of,
         and make sure the checksums are as they should be.
-        
+
         :param adapter_id - The adapter ID you'd like to verify.
         """
         dropbox_path = "{}/libreary_test_file.txt".format(
@@ -228,27 +230,30 @@ class AdapterManager:
 
         :param adapter_type - must be the name of a valid adapter class.
         :param adapter_id - the identifier you want to label this adapter with
-        :param config_dir - configuration directory. Must contain a file called 
+        :param config_dir - configuration directory. Must contain a file called
             `{adapter_id}_config.json`
         """
-        cfg = AdapterManager.create_config_for_adapter(adapter_id, adapter_type, config_dir)
+        cfg = AdapterManager.create_config_for_adapter(
+            adapter_id, adapter_type, config_dir)
         adapter = eval("{}({})".format(adapter_type, cfg))
         return adapter
 
     @staticmethod
     def create_config_for_adapter(self, adapter_id, adapter_type, config_dir):
         """
-        Static method for creating an adapter configuration. This is necessary for 
+        Static method for creating an adapter configuration. This is necessary for
         the adapter factory.
 
         :param adapter_type - must be the name of a valid adapter class.
         :param adapter_id - the identifier you want to label this adapter with
-        :param config_dir - configuration directory. Must contain a file called 
+        :param config_dir - configuration directory. Must contain a file called
             `{adapter_id}_config.json`
         """
-        base_config = json.load(open("{}/{}_config.json".format(config_dir, adapter_id)))
-        general_config = json.load(open("{}/agent_config.json".format(config_dir)))
-        
+        base_config = json.load(
+            open("{}/{}_config.json".format(config_dir, adapter_id)))
+        general_config = json.load(
+            open("{}/agent_config.json".format(config_dir)))
+
         full_adapter_conf = {}
         full_adapter_conf["adapter"] = base_config["adapter"]
         full_adapter_conf["adapter"]["adapter_type"] = adapter_type
@@ -259,7 +264,7 @@ class AdapterManager:
 
     def send_resource_to_adapters(self, r_id, delete_after_send=False):
         """
-        Sends a resource to all the places it should go. The resource must 
+        Sends a resource to all the places it should go. The resource must
         have already been ingested through the Ingester. This method:
             1. Figures out what levels a resource has been assigned
             2. Figures out what adapters are associated with that level
@@ -268,7 +273,7 @@ class AdapterManager:
             5. optionally, deletes any remaining files in the dropbox directory
 
             :param r_id - resource UUID you wish to distribute
-            :param delete_after_send - boolean indicating whether to delete 
+            :param delete_after_send - boolean indicating whether to delete
                 files after storage
         """
         try:
@@ -282,12 +287,15 @@ class AdapterManager:
 
         file_there = False
         if os.path.isfile(expected_location):
-            file_hash = hashlib.sha1(open(expected_location, "rb").read()).hexdigest()
+            file_hash = hashlib.sha1(
+                open(
+                    expected_location,
+                    "rb").read()).hexdigest()
             expected_hash = resource_metadata[4]
             if file_hash == expected_hash:
                 # there's a file in that location, and its checksum matches
                 file_there = True
-        
+
         # If the file isn't where we want it, put it there
         if not file_there:
             # retrieve moves it to the retrieval dir
@@ -318,7 +326,7 @@ class AdapterManager:
         return adapters
 
     def delete_resource_from_adapters(self, r_id):
-        """Deletes a resource from all adapters it's stored in. 
+        """Deletes a resource from all adapters it's stored in.
            Does not delete canonical copy
 
            :param r_id - UUID of resource to delete copies of
@@ -334,7 +342,6 @@ class AdapterManager:
             for adapter in adapters:
                 adapter.delete(r_id)
 
-
     def change_resource_level(self, r_id, new_levels):
         """
         Assign a new set of levels to a resource.
@@ -343,7 +350,7 @@ class AdapterManager:
         :param r_id - UUID of resource you'd like to change the levels of
         :param new_levels: list of names of levels to assign to the resource
         """
-        
+
         # Because d_r_f_a doesn't delete canonical copy, we can simply use
         # it to reset
         self.delete_resource_from_adapters(r_id)
@@ -354,8 +361,6 @@ class AdapterManager:
         self.reload_levels_adapters()
         # now, we can just act as if it has never been sent off:
         self.send_resource_to_adapters(r_id)
-
-
 
     def summarize_copies(self, r_id):
         """
@@ -425,7 +430,6 @@ class AdapterManager:
         """
         resource_info = self.get_resource_metadata(r_id)
         canonical_checksum = resource_info[4]
-        level = resource_info[3]
 
         copies = self.get_all_copies_metadata(r_id)
 
@@ -434,16 +438,18 @@ class AdapterManager:
                 found = True
                 if copy[2] != canonical_checksum:
                     try:
-                        self.restore_from_canonical_copy(self, adapter_id, r_id)
+                        self.restore_from_canonical_copy(
+                            self, adapter_id, r_id)
                     except RestorationFailedException:
                         print(
                             "Restoration of {} in {} failed".format(
-                            r_id, adapter_id))
+                                r_id, adapter_id))
                         found = False
             # didn't find the copy from this adapter
         if not found:
             try:
-                a = AdapterManager.create_adapter(self.adapter_type, adapter_id)
+                a = AdapterManager.create_adapter(
+                    self.adapter_type, adapter_id)
                 a.store(r_id)
                 found = True
             except AdapterCreationFailedException:
@@ -454,7 +460,7 @@ class AdapterManager:
             self, adapter_id, r_id, delete_after_check=True):
         """
         Ensure that a copy of an object matches its canonical checksum.
-        This method does not trust that the metadata db has the proper 
+        This method does not trust that the metadata db has the proper
         canonical checksum.
 
         Verifies that the file is actually retirevable via
@@ -509,7 +515,7 @@ class AdapterManager:
         Attempt to Restore a detected fault in the canonical copy of an object.
 
         Delete the canonical copy of an object, but keep non-canonical copies.
-        After that, create a new canonical copy, preserving resource UUID, 
+        After that, create a new canonical copy, preserving resource UUID,
             but with the correct object contents.
 
         :param r_id - UUID of resource you'd like to restore
@@ -523,7 +529,7 @@ class AdapterManager:
             raise ResourceNotIngestedException
 
         self.adapters[self.canonical_adapter]._delete_canonical(r_id)
-        
+
         current_location = 0
 
         try:
@@ -540,12 +546,13 @@ class AdapterManager:
                     except NoCopyExistsException:
                         continue
         except AdapterRestored:
-            self.adapters[self.canonical_adapter].store_canonical(current_location, r_id, real_checksum, filename)
+            self.adapters[self.canonical_adapter].store_canonical(
+                current_location, r_id, real_checksum, filename)
 
     def restore_from_canonical_copy(self, adapter_id, r_id):
         """
         Restore a copy of an object from its canonical copy.
-        To restore from the canonical copy, we can simply delete and 
+        To restore from the canonical copy, we can simply delete and
             re-ingest the fraudulent copy.
 
         :param adapter_id - the ID of the adapter with the broken copy
@@ -558,7 +565,7 @@ class AdapterManager:
         """
         Compare copies of a resource in two adapters. Returns True iff
             the checksums of each copy match.
-        
+
         A deep compare will actually compute the current checksum of the
             file stored in the adapter specified. Some adapters can do this
             with no file I/O, while others will have to actually retrieve the file
@@ -570,10 +577,10 @@ class AdapterManager:
         :param deep - specify whether to run a deep or shallow check
         """
         try:
-            copy_info_1 = copy_info = self.cursor.execute(
+            copy_info_1 = self.cursor.execute(
                 "select * from copies where resource_id=? and adapter_identifier=? limit 1",
                 (r_id, adapter_id_1)).fetchall()[0]
-            copy_info_1 = copy_info = self.cursor.execute(
+            copy_info_2 = self.cursor.execute(
                 "select * from copies where resource_id=? and adapter_identifier=? limit 1",
                 (r_id, adapter_id_2)).fetchall()[0]
         except IndexError:
@@ -582,13 +589,14 @@ class AdapterManager:
         if not deep:
             return copy_info_1[4] == copy_info_2[4]
 
-        return self.adapters[adapter_id_1].get_actual_checksum(r_id) == self.adapters[adapter_id_2].get_actual_checksum(r_id)
+        return self.adapters[adapter_id_1].get_actual_checksum(
+            r_id) == self.adapters[adapter_id_2].get_actual_checksum(r_id)
 
     def verify_copy(self, r_id, adapter_id, deep=False):
         """
         Compare copies of a resource in two adapters, one being canonical.
         Returns True iff the checksums of each copy match.
-        
+
         A deep compare will actually compute the current checksum of the
             file stored in the adapter specified. Some adapters can do this
             with no file I/O, while others will have to actually retrieve the file
@@ -598,4 +606,5 @@ class AdapterManager:
         :param adapter_id - Adapter ID of the adapter to check against
         :param deep - specify whether to run a deep or shallow check
         """
-        return self.compare_copies(r_id, adapter_id, self.canonical_adapter, deep=deep)
+        return self.compare_copies(
+            r_id, adapter_id, self.canonical_adapter, deep=deep)

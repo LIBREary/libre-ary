@@ -10,7 +10,7 @@ class Libreary:
     """
     This is the user-facing class for LIBRE-ary. Users of LIBRE-ary should only interact
     with this class directly. LIBRE-ary objects are able to handle all of the
-    functionality of this module. Developers should feel free to extend the 
+    functionality of this module. Developers should feel free to extend the
     functionality of this class and are encouraged to submit pull requests
     to the main repository.
 
@@ -27,10 +27,10 @@ class Libreary:
 
     def __init__(self, config_dir):
         """
-        Constructor for Libreary object. 
-            :param config_dir - a string pointing to a directory 
+        Constructor for Libreary object.
+            :param config_dir - a string pointing to a directory
             containing Libreary configuration. In the config directory
-            must be a file called `config.json` which contains main 
+            must be a file called `config.json` which contains main
             configuration, and a separate config file for each adapter
             you plan to use. More detail on adapter configs can be found
             in the adapters constructor documentation.
@@ -56,7 +56,7 @@ class Libreary:
             }
             ```
 
-            The canonical adapter is the adapter which will store the "canonical" copy 
+            The canonical adapter is the adapter which will store the "canonical" copy
             of each resource, which will then be used as the "real" version of that digital object.
 
             This object creeates an adapter manager and an ingester. For more information,
@@ -70,14 +70,15 @@ class Libreary:
         self.config = json.load(open(self.config_path))
 
         # Metadata stuff
-        self.metadata_db = os.path.realpath(self.config['metadata'].get("db_file"))
+        self.metadata_db = os.path.realpath(
+            self.config['metadata'].get("db_file"))
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
 
         # Directories we care about
         self.dropbox_dir = self.config["options"]["dropbox_dir"]
         self.ret_dir = self.config["options"]["output_dir"]
-        
+
         # Objects we need
         self.adapter_man = AdapterManager(self.config)
         self.ingester = Ingester(self.config)
@@ -100,12 +101,13 @@ class Libreary:
 
 
         :param deep speficies whether to use a deep search. A deep search will calculate actual checksums
-        of each copy of each object, while a shallow one will trust that the checksum in the metadata 
+        of each copy of each object, while a shallow one will trust that the checksum in the metadata
         database matches that of the actual object.
         """
         pass
 
-    def ingest(self, current_file_path, levels, description, delete_after_store=False):
+    def ingest(self, current_file_path, levels,
+               description, delete_after_store=False):
         """
         Ingest a new object to the LIBRE-ary. This:
             1. Creates an entry in the `resources` table in the metadata db
@@ -115,27 +117,33 @@ class Libreary:
             5. Returns object ID
 
         :param current_file_path - the current path to the file you wish to ingest
-        :param levels - a list of names of levels. These levels must exist in the 
+        :param levels - a list of names of levels. These levels must exist in the
             `levels` table in the metadata db
-        :param description - a description of this object. This is useful when you 
+        :param description - a description of this object. This is useful when you
             want to search for objects later
         :param delete_after_store - Boolean. If True, the Ingester will delete the object after it's stored.
         """
 
-        # Don't want ingester to delete it, because then AM will need to retrieve.
-        obj_id = self.ingester.ingest(current_file_path, levels, description, delete_after_store=False)
-        self.adapter_man.send_resource_to_adapters(obj_id, delete_after_send=delete_after_store)
+        # Don't want ingester to delete it, because then AM will need to
+        # retrieve.
+        obj_id = self.ingester.ingest(
+            current_file_path,
+            levels,
+            description,
+            delete_after_store=False)
+        self.adapter_man.send_resource_to_adapters(
+            obj_id, delete_after_send=delete_after_store)
         return obj_id
 
     def retrieve(self, r_id):
         """
-        Retrieve an object. This will save a copy of the object 
+        Retrieve an object. This will save a copy of the object
             as `<self.output_dir>/<object_filename>`
 
         The output and dropbox directories are volatile and should not be used for object storage.
-        
+
         Adapters and other objects frequently may delete or write files in these directories.
-        
+
         :param r_id - The resource UUID that corresponds to the object you'd like to retrieve.
 
         Returns a path to the retireved object.
@@ -169,7 +177,7 @@ class Libreary:
         """
         Search the metadata db for information about resources.
 
-        :param search_term - a string with which to search against the metadata db. 
+        :param search_term - a string with which to search against the metadata db.
             Can match UUID, filename, original path, or description.
         """
         pass
@@ -192,7 +200,7 @@ class Libreary:
 
 
         :param deep speficies whether to use a deep search. A deep search will calculate actual checksums
-        of each copy of each object, while a shallow one will trust that the checksum in the metadata 
+        of each copy of each object, while a shallow one will trust that the checksum in the metadata
         database matches that of the actual object.
 
         :param r_id - the resource ID of the object you'd like to check

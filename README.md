@@ -23,8 +23,11 @@ The LIBREary configuration process is relatively simple, and getting started wit
 LIBREary is a python package, and can be istalled using python3's setup tools. First, make sure you have python3 installed on your system. Then:
 
 `git clone https://github.com/benhg/libre-ary`
+
 `cd libre-ary`
+
 `python3 setup.py install`
+
 
 After the `0.0.1` release (scheduled for 1/15/2019), LIBREary will be uploaded to the Python Package Index (PyPI) and will be `pip` installable.
 

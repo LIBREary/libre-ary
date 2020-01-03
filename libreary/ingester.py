@@ -7,12 +7,13 @@ import json
 
 from libreary.adapter_manager import AdapterManager
 
+
 class Ingester:
 
     def __init__(self, config):
         """
         Constructor for the Ingester object. This object can be created manually, but
-        in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict 
+        in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
         :param config, which should be structured as follows:
         ```{json}
         {
@@ -41,31 +42,34 @@ class Ingester:
         self.canonical_adapter_type = config["canonical_adapter"]
         self.config_dir = config["options"]["config_dir"]
 
-    def ingest(self, current_file_path, levels, description, delete_after_store=False):
+    def ingest(self, current_file_path, levels,
+               description, delete_after_store=False):
         """
         Ingest an object to LIBREary. This method:
         - Creates the canonical copy of the object
         - Creates the entry in the `resources` table describing the resource
         - Optionally, delete the file out of the dropbox dir.
 
-        :param current_file_path - 
+        :param current_file_path -
         """
         filename = current_file_path.split("/")[-1]
-        sha1Hash = hashlib.sha1(open(current_file_path,"rb").read())
+        sha1Hash = hashlib.sha1(open(current_file_path, "rb").read())
         checksum = sha1Hash.hexdigest()
 
-        canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+        canonical_adapter = AdapterManager.create_adapter(
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
 
         obj_uuid = str(uuid.uuid4())
 
-        canonical_adapter_locator = canonical_adapter._store_canonical(current_file_path, obj_uuid, checksum, filename)
+        canonical_adapter_locator = canonical_adapter._store_canonical(
+            current_file_path, obj_uuid, checksum, filename)
 
         levels = ",".join([str(l) for l in levels])
 
         # Ingest to db
-        
-        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)", 
-            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid, description))
+
+        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)",
+                            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid, description))
 
         self.conn.commit()
 
@@ -76,7 +80,6 @@ class Ingester:
 
         return obj_uuid
 
-
     def verify_ingestion(self, r_id):
         """
         Make sure an object has been properly ingested.
@@ -84,7 +87,6 @@ class Ingester:
         :param r_id - the UUID of the resource you are verifying
         """
         pass
-
 
     def list_resources(self):
         """
@@ -99,17 +101,19 @@ class Ingester:
 
     def delete_resource(self, r_id):
         """
-        Delete a resource from the LIBREary. 
+        Delete a resource from the LIBREary.
 
         This method deletes the canonical copy and removes the corresponding entry in the `resources`
             table.
 
         :param r_id - the UUID of the resouce you're deleting
         """
-        resource_info = self.cursor.execute("select * from resources where id=?", (r_id,))
-        canonical_checksum =  resource_info[4]
+        resource_info = self.cursor.execute(
+            "select * from resources where id=?", (r_id,))
+        canonical_checksum = resource_info[4]
 
-        canonical_adapter = AdapterManager.create_adapter(self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+        canonical_adapter = AdapterManager.create_adapter(
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
         checksum = canonical_adapter.get_actual_checksum(r_id)
 
         if checksum == canonical_checksum:
