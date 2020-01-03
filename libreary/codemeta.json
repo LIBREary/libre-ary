@@ -1,0 +1,51 @@
+{
+    "@context": [
+        "https://doi.org/10.5063/schema/codemeta-2.0",
+        "http://schema.org"
+    ],
+    "@type": "SoftwareSourceCode",
+    "identifier": "libreary",
+    "name": "LIBREary",
+    "version": "0.0.1",
+    "description": "Flexible distributed digital archive system.",
+    "license": "OSI Approved :: Apache Software License",
+    "author": [
+        {
+            "@id":"http://orcid.org/0000-0002-0762-2684",
+            "@type": "Person",
+            "givenName": "Ben",
+            "familyName": "Glick",
+            "email": "glick@glick.cloud"
+        }
+    ],
+    "softwareRequirements": [
+        {
+            "@type": "SoftwareApplication",
+            "identifier": "sqlite3",
+            "name": "SQLite3",
+            "provider": {
+                "@id": "https://pypi.org",
+                "@type": "Organization",
+                "name": "The Python Package Index",
+                "url": "https://pypi.org"
+            },
+            "runtimePlatform": "Python 3.6.4"
+        }
+    ],
+    "audience": [
+        {
+            "@type": "Audience",
+            "audienceType": "Developers, Archivists, Librarians"
+        }
+    ],
+    "provider": {
+        "@id": "https://pypi.org",
+        "@type": "Organization",
+        "name": "The Python Package Index",
+        "url": "https://pypi.org"
+    },
+    "runtimePlatform": "Python 3.6.4",
+    "url": "https://github.com/benhg/libre-ary",
+    "developmentStatus": "3 - Alpha",
+    "programmingLanguage": "Python :: 3.6"
+}

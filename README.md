@@ -37,7 +37,7 @@ Please see the quickstart guide or [our docs](https://libre-ary.readthedocs.io) 
 
 ## How should I cite or use LIBREary?
 
-LIBRE-ary is free and open-source software. It is licensed under the Apache General Public License 2.0. You are free to use it for whatever purpose you would like, within the terms of that licence. I would ask that you give credit to the authors of LIBRE-ary and link to this GitHub repository in the documentation of any project or implementation using LIBREary. 
+LIBRE-ary is free and open-source software. It is licensed under the Apache General Public License v3. You are free to use it for whatever purpose you would like, within the terms of that licence. I would ask that you give credit to the authors of LIBRE-ary and link to this GitHub repository in the documentation of any project or implementation using LIBREary. 
 
 If you wish to cite LIBREary in academic work (or other work), please cite the following publication:
 
