@@ -7,6 +7,7 @@ import shutil
 
 import sqlite3
 
+from libreary.adapters.BaseAdapter import BaseAdapter
 from libreary.adapters.local import LocalAdapter
 from libreary.adapters.s3 import S3Adapter
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
@@ -46,7 +47,7 @@ class AdapterManager:
     - verify_copy (check if a copy matches the canonicl copy)
     """
 
-    def __init__(self, config):
+    def __init__(self, config:dict):
         """
         Constructor for the AdapterManager object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
@@ -86,7 +87,7 @@ class AdapterManager:
         # This method should be run externally, any time a new level is added
         self.reload_levels_adapters()
 
-    def reload_levels_adapters(self):
+    def reload_levels_adapters(self) -> None:
         """
         Set the `self.adapters` and `self.levels` instance variables.
 
@@ -98,7 +99,7 @@ class AdapterManager:
         self._set_levels()
         self._set_adapters()
 
-    def get_all_levels(self):
+    def get_all_levels(self) -> List[dict]:
         """
         Returns all levels in the metadata database.
 
@@ -119,13 +120,13 @@ class AdapterManager:
                                 "adapters": json.loads(level[3])}
         return levels
 
-    def _set_levels(self):
+    def _set_levels(self) -> None:
         """
         Convenience method to reset levels as an instance variable
         """
         self.levels = self.get_all_levels()
 
-    def get_all_adapters(self):
+    def get_all_adapters(self) -> List[dict]:
         """
         Set up all of the adapters we will need, based on all levels
         from the metadata database.
@@ -152,7 +153,7 @@ class AdapterManager:
                     adapter["type"], adapter["id"], self.config_dir)
         return adapters
 
-    def _set_adapters(self):
+    def _set_adapters(self) -> None:
         """
         Convenience method to set `self.adapters` to the output of `get_all_adapters
 
@@ -170,7 +171,7 @@ class AdapterManager:
         """
         self.adapters = self.get_all_adapters()
 
-    def set_additional_adapter(self, adapter_id, adapter_type):
+    def set_additional_adapter(self, adapter_id: str, adapter_type: str) -> BaseAdapter:
         """
         Manually add an adapter to the pool of adapters.
 
@@ -184,7 +185,7 @@ class AdapterManager:
         self.adapters["adapter_id"] = adapter
         return adapter
 
-    def verify_adapter(self, adapter_id):
+    def verify_adapter(self, adapter_id:str) -> bool:
         """
         Make sure an adapter is working. To do this, we store, retrieve,
         and delete a file that we know the contents of,
@@ -223,7 +224,7 @@ class AdapterManager:
         return r_val
 
     @staticmethod
-    def create_adapter(adapter_type, adapter_id, config_dir):
+    def create_adapter(adapter_type:str, adapter_id:str, config_dir:str) -> BaseAdapter:
         """
         Static method for creating and returning an adapter object.
         This is essentially an Adapter factory.
@@ -239,7 +240,7 @@ class AdapterManager:
         return adapter
 
     @staticmethod
-    def create_config_for_adapter(self, adapter_id, adapter_type, config_dir):
+    def create_config_for_adapter(self, adapter_id:str, adapter_type:str, config_dir:str) -> dict:
         """
         Static method for creating an adapter configuration. This is necessary for
         the adapter factory.
@@ -262,7 +263,7 @@ class AdapterManager:
 
         return full_adapter_conf
 
-    def send_resource_to_adapters(self, r_id, delete_after_send=False):
+    def send_resource_to_adapters(self, r_id:str, delete_after_send:bool=False) -> None:
         """
         Sends a resource to all the places it should go. The resource must
         have already been ingested through the Ingester. This method:
@@ -312,7 +313,7 @@ class AdapterManager:
         if delete_after_send:
             os.remove(expected_location)
 
-    def get_adapters_by_level(self, level):
+    def get_adapters_by_level(self, level:str) -> List[BaseAdapter]:
         """
         Get a list of adapter objects based on a level.
         Returns a list of callable adapter objects.
@@ -325,7 +326,7 @@ class AdapterManager:
             adapters.append(self.adapters[adapter["id"]])
         return adapters
 
-    def delete_resource_from_adapters(self, r_id):
+    def delete_resource_from_adapters(self, r_id:str)-> None:
         """Deletes a resource from all adapters it's stored in.
            Does not delete canonical copy
 
@@ -342,7 +343,7 @@ class AdapterManager:
             for adapter in adapters:
                 adapter.delete(r_id)
 
-    def change_resource_level(self, r_id, new_levels):
+    def change_resource_level(self, r_id:str, new_levels:List[str])-> None:
         """
         Assign a new set of levels to a resource.
         Removes all levels from a resource, replaces them with :param new_levels
@@ -362,7 +363,7 @@ class AdapterManager:
         # now, we can just act as if it has never been sent off:
         self.send_resource_to_adapters(r_id)
 
-    def summarize_copies(self, r_id):
+    def summarize_copies(self, r_id:str)-> List[List[str]]:
         """
         Get a summary of all copies of a single resource. That summary includes:
 
@@ -377,7 +378,7 @@ class AdapterManager:
         sql = "select * from copies where resource_id = '{}'".format(r_id)
         return self.cursor.execute(sql).fetchall()
 
-    def get_canonical_copy_metadata(self, r_id):
+    def get_canonical_copy_metadata(self, r_id:str)-> List[List[str]]:
         """
         Get a summary of the canonical copy of an object's medatada. That summary includes:
         `copy_id`, `resource_id`, `adapter_identifier`, `locator`, `checksum`, `adapter type`, `canonical (bool)`
@@ -388,7 +389,7 @@ class AdapterManager:
             r_id)
         return self.cursor.execute(sql).fetchall()
 
-    def retrieve_by_preference(self, r_id):
+    def retrieve_by_preference(self, r_id:str)->str:
         """
         Retrieve a resource.
 
@@ -417,7 +418,7 @@ class AdapterManager:
                 print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
                 self.restore_from_canonical_copy(adapter.adapter_id, r_id)
 
-    def check_single_resource_single_adapter(self, r_id, adapter_id):
+    def check_single_resource_single_adapter(self, r_id:str, adapter_id:str)->bool:
         """
         Ensure that a copy of an object matches its canonical checksum.
         This method trusts that the metadata db has the proper canonical checksum.
@@ -457,7 +458,7 @@ class AdapterManager:
         return found
 
     def verify_adapter_metadata(
-            self, adapter_id, r_id, delete_after_check=True):
+            self, adapter_id:str, r_id:str, delete_after_check:bool=True)->bool:
         """
         Ensure that a copy of an object matches its canonical checksum.
         This method does not trust that the metadata db has the proper
@@ -496,7 +497,7 @@ class AdapterManager:
 
         return r_val
 
-    def get_resource_metadata(self, r_id):
+    def get_resource_metadata(self, r_id:str)->List[List[str]]:
         """
         Get a summary of information about a resource. That summary includes:
 
@@ -510,7 +511,7 @@ class AdapterManager:
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
-    def restore_canonical_copy(self, r_id):
+    def restore_canonical_copy(self, r_id:str)->None:
         """
         Attempt to Restore a detected fault in the canonical copy of an object.
 
@@ -549,7 +550,7 @@ class AdapterManager:
             self.adapters[self.canonical_adapter].store_canonical(
                 current_location, r_id, real_checksum, filename)
 
-    def restore_from_canonical_copy(self, adapter_id, r_id):
+    def restore_from_canonical_copy(self, adapter_id:str, r_id:str)->None:
         """
         Restore a copy of an object from its canonical copy.
         To restore from the canonical copy, we can simply delete and
@@ -561,7 +562,7 @@ class AdapterManager:
         self.adapters[adapter_id].delete(r_id)
         self.adapters[adapter_id].store(r_id)
 
-    def compare_copies(self, r_id, adapter_id_1, adapter_id_2, deep=False):
+    def compare_copies(self, r_id:str, adapter_id_1:str, adapter_id_2:str, deep:bool=False)->bool:
         """
         Compare copies of a resource in two adapters. Returns True iff
             the checksums of each copy match.
@@ -592,7 +593,7 @@ class AdapterManager:
         return self.adapters[adapter_id_1].get_actual_checksum(
             r_id) == self.adapters[adapter_id_2].get_actual_checksum(r_id)
 
-    def verify_copy(self, r_id, adapter_id, deep=False):
+    def verify_copy(self, r_id:str, adapter_id:str, deep:bool=False)->bool:
         """
         Compare copies of a resource in two adapters, one being canonical.
         Returns True iff the checksums of each copy match.
