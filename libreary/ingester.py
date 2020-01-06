@@ -4,13 +4,14 @@ from shutil import copyfile
 import hashlib
 import uuid
 import json
+from typing import List
 
 from libreary.adapter_manager import AdapterManager
 
 
 class Ingester:
 
-    def __init__(self, config:dict):
+    def __init__(self, config: dict):
         """
         Constructor for the Ingester object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
@@ -42,8 +43,8 @@ class Ingester:
         self.canonical_adapter_type = config["canonical_adapter"]
         self.config_dir = config["options"]["config_dir"]
 
-    def ingest(self, current_file_path:str, levels:List[str],
-               description:str, delete_after_store:bool=False)->str:
+    def ingest(self, current_file_path: str, levels: List[str],
+               description: str, delete_after_store: bool = False) -> str:
         """
         Ingest an object to LIBREary. This method:
         - Creates the canonical copy of the object
@@ -80,7 +81,7 @@ class Ingester:
 
         return obj_uuid
 
-    def verify_ingestion(self, r_id:str)->bool:
+    def verify_ingestion(self, r_id: str) -> bool:
         """
         Make sure an object has been properly ingested.
 
@@ -88,7 +89,7 @@ class Ingester:
         """
         pass
 
-    def list_resources(self)->List[List[str]]:
+    def list_resources(self) -> List[List[str]]:
         """
         Return a list of summaries of each resource. This summary includes:
 
@@ -99,7 +100,7 @@ class Ingester:
         """
         return self.cursor.execute("select * from resources").fetchall()
 
-    def delete_resource(self, r_id:str)->None:
+    def delete_resource(self, r_id: str) -> None:
         """
         Delete a resource from the LIBREary.
 

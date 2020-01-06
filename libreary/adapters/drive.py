@@ -15,10 +15,11 @@ except ImportError:
 else:
     _google_enabled = True
 
+
 class GoogleDriveAdapter():
     """docstring for LocalAdapter
-        
-        LocalAdapter is a basic adapter which saves files 
+
+        LocalAdapter is a basic adapter which saves files
         to a local directory specified in the adapter's config
 
         Later in this project's plan, the LocalAdapter will be used
@@ -28,8 +29,6 @@ class GoogleDriveAdapter():
         It's also very nice to use for testing, as saving files is easy (ish)
         to debug and doesn't cost any money (unlike a cloud service)
     """
-
-    
 
     def __init__(self, config):
         self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
@@ -52,10 +51,11 @@ class GoogleDriveAdapter():
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
-        new_location = os.path.expanduser("{}/{}".format(self.storage_dir, name))
+        new_location = os.path.expanduser(
+            "{}/{}".format(self.storage_dir, name))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
-        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
         if not os.path.isdir(new_dir):
@@ -66,7 +66,7 @@ class GoogleDriveAdapter():
 
         other_copies = self.cursor.execute(
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
-            r_id, self.adapter_id)).fetchall()
+                r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
             return
@@ -89,8 +89,8 @@ class GoogleDriveAdapter():
             raise ResourceNotIngestedException
         try:
             copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
+                "select * from copies where resource_id=? and adapter_identifier=? limit 1",
+                (r_id, self.adapter_id)).fetchall()[0]
         except IndexError:
             raise NoCopyExistsException
         expected_hash = copy_info[4]
@@ -103,7 +103,7 @@ class GoogleDriveAdapter():
             copyfile(copy_path, new_location)
         else:
             print("Checksum Mismatch")
-            
+
         return new_location
 
     def update(self, r_id, updated):
@@ -117,10 +117,11 @@ class GoogleDriveAdapter():
         """
         current_location = current_path
         name = filename
-        new_location = os.path.expanduser("{}/{}_canonical".format(self.storage_dir, filename))
+        new_location = os.path.expanduser(
+            "{}/{}_canonical".format(self.storage_dir, filename))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
-        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
         if not os.path.isdir(new_dir):
@@ -129,7 +130,8 @@ class GoogleDriveAdapter():
         if os.path.isfile(new_location):
             new_location = "{}_{}".format(new_location, r_id)
 
-        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format( str(r_id), self.adapter_id)
+        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format(
+            str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
             print("Other canonical copies from this adapter exist")
@@ -144,7 +146,7 @@ class GoogleDriveAdapter():
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id,  new_location, sha1Hashed, self.adapter_type, True])
+            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, True])
         self.conn.commit()
 
         return new_location
@@ -194,6 +196,6 @@ class GoogleDriveAdapter():
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
         path = copy_info[3]
-        hash_obj = hashlib.sha1(open(path,"rb").read())
+        hash_obj = hashlib.sha1(open(path, "rb").read())
         checksum = hash_obj.hexdigest()
         return checksum

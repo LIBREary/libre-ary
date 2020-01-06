@@ -2,6 +2,8 @@ import json
 import os
 import sqlite3
 import hashlib
+from typing import List
+
 
 try:
     import boto3
@@ -12,21 +14,23 @@ except ImportError:
 else:
     _boto_enabled = True
 
-CONFIG_DIR = "../config"
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
+from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
+
 
 class S3Adapter:
     """
-        An Adapter allows LIBREary to save copies of digital objects 
+        An Adapter allows LIBREary to save copies of digital objects
             to different places across cyberspace. Working with many
             adapters in concert, one should be able do save sufficient
             copies to places they want them.
-        
+
         S3Adapter allows users to store objects in AWS S3.
     """
 
-    def __init__(self, config:dict):
+    def __init__(self, config: dict):
         """
-        Constructor for S3Adapter. Expects a python dict :param `config` 
+        Constructor for S3Adapter. Expects a python dict :param `config`
             in the following format:
 
         You must have already created the S3 bucket you wish to use for this to work.
@@ -60,16 +64,17 @@ class S3Adapter:
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.ret_dir = config["options"]["output_dir"]
 
-
         if not _boto_enabled:
-            raise OptionalModuleMissingException(['boto3'], "S3 adapter requires the boto3 module.")
+            raise OptionalModuleMissingException(
+                ['boto3'], "S3 adapter requires the boto3 module.")
 
         self.profile = self.config["adapter"].get("profile")
         self.key_file = self.config["adapter"].get("key_file")
         self.bucket_name = self.config["adapter"].get("bucket_name")
         self.region = self.config["adapter"].get("bucket_name")
 
-        self.env_specified = os.getenv("AWS_ACCESS_KEY_ID") is not None and os.getenv("AWS_SECRET_ACCESS_KEY") is not None
+        self.env_specified = os.getenv("AWS_ACCESS_KEY_ID") is not None and os.getenv(
+            "AWS_SECRET_ACCESS_KEY") is not None
         if self.profile is None and self.key_file is None and not self.env_specified:
             raise ConfigurationError("Must specify either profile', 'key_file', or "
                                      "'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' environment variables.")
@@ -79,17 +84,16 @@ class S3Adapter:
         except Exception as e:
             raise e
 
-
-    def initialize_boto_client(self)->None:
+    def initialize_boto_client(self) -> None:
         """Initialize the boto client."""
 
         self.session = self.create_session()
-        #self.client = self.session.client('s3')
-        #self.s3 = self.session.resource('s3')
+        # self.client = self.session.client('s3')
+        # self.s3 = self.session.resource('s3')
         self.client = boto3.client('s3')
         self.s3 = boto3.resource('s3')
 
-    def create_session(self)->boto3.session.Session:
+    def create_session(self) -> boto3.session.Session:
         """Create a session.
 
         First we look in self.key_file for a path to a json file with the
@@ -116,11 +120,11 @@ class S3Adapter:
                 with open(credfile, 'r') as f:
                     creds = json.load(f)
             except json.JSONDecodeError as e:
-             
+
                 raise e
 
             except Exception as e:
-           
+
                 raise e
 
             session = boto3.session.Session(region_name=self.region, **creds)
@@ -133,49 +137,48 @@ class S3Adapter:
 
         return session
 
-
-    def store(self, r_id:str)->None:
+    def store(self, r_id: str) -> None:
         """
         Store a copy of a resource in this adapter.
 
-        Store assumes that the file is in the `dropbox_dir`. 
+        Store assumes that the file is in the `dropbox_dir`.
         AdapterManager will always verify that this is the case.
-        
+
         :param r_id - the resource to store's UUID
         """
 
         file_metadata = self.load_metadata(r_id)[0]
-        dropbox_path = file_metadata[1]
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
 
-        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
-
 
         other_copies = self.cursor.execute(
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
-            r_id, self.adapter_id)).fetchall()
+                r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
             print("Other copies from this adapter exist")
             return
 
         if sha1Hashed == checksum:
             locator = '{}_{}'.format(name, r_id)
-            self.s3.Bucket(self.bucket_name).upload_file(current_location, locator)
+            self.s3.Bucket(
+                self.bucket_name).upload_file(
+                current_location,
+                locator)
         else:
             print("Checksum Mismatch")
             raise Exception
-
-        
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
             [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
-    def _store_canonical(self, current_path:str, r_id:str, checksum:str, filename:str)->str:
+    def _store_canonical(self, current_path: str, r_id: str,
+                         checksum: str, filename: str) -> str:
         """
             Store a canonical copy of a resource in this adapter.
 
@@ -191,12 +194,13 @@ class S3Adapter:
         """
         current_location = current_path
 
-        sha1Hash = hashlib.sha1(open(current_location,"rb").read())
+        sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
-           
-        locator = "{}_{}_canonical".format(filename, r_id) 
 
-        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format( str(r_id), self.adapter_id)
+        locator = "{}_{}_canonical".format(filename, r_id)
+
+        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format(
+            str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
             print("Other canonical copies from this adapter exist")
@@ -210,23 +214,22 @@ class S3Adapter:
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id,  locator, sha1Hashed, self.adapter_type, True])
+            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, True])
         self.conn.commit()
 
         return locator
 
-
-    def retrieve(self, r_id:str)->str:
+    def retrieve(self, r_id: str) -> str:
         """
         Retrieve a copy of a resource from this adapter.
 
-        Retrieve assumes that the file can be stored to the `output_dir`. 
+        Retrieve assumes that the file can be stored to the `output_dir`.
         AdapterManager will always verify that this is the case.
 
         Returns the path to the resource.
 
         May overwrite files in the `output_dir`
-        
+
         :param r_id - the resource to retrieve's UUID
         """
         try:
@@ -244,13 +247,16 @@ class S3Adapter:
         new_location = "{}/{}".format(self.ret_dir, filename)
 
         if real_hash == expected_hash:
-            self.s3.Bucket(self.bucket_name).download_file(copy_locator, new_location)
+            self.s3.Bucket(
+                self.bucket_name).download_file(
+                copy_locator,
+                new_location)
         else:
             print("Checksum Mismatch")
-            
+
         return new_location
 
-    def update(resource_id:str, updated_path:str)->None:
+    def update(resource_id: str, updated_path: str) -> None:
         """
         Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
 
@@ -260,57 +266,58 @@ class S3Adapter:
         """
         pass
 
-    def delete(self, r_id:str)->None:
+    def delete(self, r_id: str) -> None:
         """
         Delete a copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
-        
+
         :param r_id - the resource to retrieve's UUID
         """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
-        expected_hash = copy_info[4]
         locator = copy_info[3]
 
-        response = self.client.delete_object(Bucket=self.bucket_name, Key=locator)
+        self.client.delete_object(
+            Bucket=self.bucket_name, Key=locator)
         self.cursor.execute("delete from copies where copy_id=?",
                             [copy_info[0]])
         self.conn.commit()
 
-    def _delete_canonical(self, r_id:str)->None:
+    def _delete_canonical(self, r_id: str) -> None:
         """
         Delete a canonical copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
-        
+
         :param r_id - the resource to retrieve's UUID
         """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
-        expected_hash = copy_info[4]
         locator = copy_info[3]
 
-        response = self.client.delete_object(Bucket=self.bucket_name, Key=locator)
+        self.client.delete_object(
+            Bucket=self.bucket_name, Key=locator)
 
         self.cursor.execute("delete from copies where copy_id=?",
                             [copy_info[0]])
         self.conn.commit()
 
-    def get_actual_checksum(self, r_id:str, delete_after_download:bool=True)->str:
+    def get_actual_checksum(self, r_id: str,
+                            delete_after_download: bool = True) -> str:
         """
         Returns an exact checksum of a resource, not relying on the metadata db.
-        
+
         If possible, implementations of get_actual_checksum should do no file I/O.
             For S3, we need to download and checksum manually. :/
 
         :param r_id - resource we want the checksum of
-        :param delete_after_download - True if the file should be downloaded after the 
+        :param delete_after_download - True if the file should be downloaded after the
             checksum is calculated
         """
         new_path = self.retrieve("r_id")
 
-        sha1Hash = hashlib.sha1(open(new_path,"rb").read())
+        sha1Hash = hashlib.sha1(open(new_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
         if delete_after_download:
@@ -318,7 +325,7 @@ class S3Adapter:
 
         return sha1Hashed
 
-    def load_metadata(self, r_id:str)->List[List[str]]:
+    def load_metadata(self, r_id: str) -> List[List[str]]:
         """
         Get a summary of information about a resource. That summary includes:
 

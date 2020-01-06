@@ -1,6 +1,8 @@
 import json
 import os
 import sqlite3
+from typing import List
+
 
 from libreary.adapter_manager import AdapterManager
 from libreary.ingester import Ingester
@@ -25,7 +27,7 @@ class Libreary:
     - check_single_resource (check only a single resource)
     """
 
-    def __init__(self, config_dir:str):
+    def __init__(self, config_dir: str):
         """
         Constructor for Libreary object.
             :param config_dir - a string pointing to a directory
@@ -83,7 +85,7 @@ class Libreary:
         self.adapter_man = AdapterManager(self.config)
         self.ingester = Ingester(self.config)
 
-    def run_check(deep:bool=False)->List[str]:
+    def run_check(deep: bool = False) -> List[str]:
         """
         Check all of the objects in the LIBRE-ary. This follows the following process:
 
@@ -106,8 +108,8 @@ class Libreary:
         """
         pass
 
-    def ingest(self, current_file_path:str, levels:List[str],
-               description:str, delete_after_store:bool=False)->str:
+    def ingest(self, current_file_path: str, levels: List[str],
+               description: str, delete_after_store: bool = False) -> str:
         """
         Ingest a new object to the LIBRE-ary. This:
             1. Creates an entry in the `resources` table in the metadata db
@@ -135,7 +137,7 @@ class Libreary:
             obj_id, delete_after_send=delete_after_store)
         return obj_id
 
-    def retrieve(self, r_id:str)->str:
+    def retrieve(self, r_id: str) -> str:
         """
         Retrieve an object. This will save a copy of the object
             as `<self.output_dir>/<object_filename>`
@@ -151,7 +153,7 @@ class Libreary:
         new_location = self.adapter_man.retrieve_by_preference(r_id)
         return new_location
 
-    def delete(self, r_id:str)->None:
+    def delete(self, r_id: str) -> None:
         """
         Delete an object from LIBRE-ary. This:
             1. Deletes the resource from all of the adapters it was stored in
@@ -163,7 +165,7 @@ class Libreary:
         self.adapter_man.delete_resource_from_adapters(r_id)
         self.ingester.delete_resource((r_id))
 
-    def update(self, r_id:str, updated_path:str)->None:
+    def update(self, r_id: str, updated_path: str) -> None:
         """
         Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
 
@@ -173,7 +175,7 @@ class Libreary:
         """
         pass
 
-    def search(self, search_term:str)->List[str]:
+    def search(self, search_term: str) -> List[str]:
         """
         Search the metadata db for information about resources.
 
@@ -182,7 +184,7 @@ class Libreary:
         """
         pass
 
-    def check_single_resource(self, r_id:str, deep:bool=False)->bool:
+    def check_single_resource(self, r_id: str, deep: bool = False) -> bool:
         """
         Check a single object in the LIBRE-ary. This follows the following process:
 
