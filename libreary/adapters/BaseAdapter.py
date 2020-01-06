@@ -10,14 +10,14 @@ class BaseAdapter:
         copies to places they want them.
     """
 
-    def __init__(config):
+    def __init__(config:dict):
         """
         This should handle configuration (auth, etc.) and set up the
         metadata db connection
         """
         pass
 
-    def store(resource_id):
+    def store(resource_id:str)->str:
         """
         Store a copy of a resource in this adapter.
 
@@ -28,7 +28,7 @@ class BaseAdapter:
         """
         pass
 
-    def _store_canonical(current_path, r_id):
+    def _store_canonical(current_path:str, r_id:str)->str:
         """
             Store a canonical copy of a resource in this adapter.
 
@@ -44,7 +44,7 @@ class BaseAdapter:
         """
         pass
 
-    def _delete_canonical(self, r_id):
+    def _delete_canonical(self, r_id:str)->None:
         """
         Delete a canonical copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -54,7 +54,7 @@ class BaseAdapter:
         pass
 
 
-    def retrieve(resource_id):
+    def retrieve(resource_id:str)->str:
         """
         Retrieve a copy of a resource from this adapter.
 
@@ -69,7 +69,7 @@ class BaseAdapter:
         """
         pass
 
-    def update(resource_id, updated):
+    def update(resource_id:str, updated:str)->None:
         """
         Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
 
@@ -79,7 +79,7 @@ class BaseAdapter:
         """
         pass
 
-    def delete(resource_id):
+    def delete(resource_id:str)->None:
         """
         Delete a copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -88,7 +88,7 @@ class BaseAdapter:
         """
         pass
 
-    def get_actual_checksum(self, r_id):
+    def get_actual_checksum(self, r_id:str)->str:
         """
         Return an exact checksum of a resource, not relying on the metadata db
 

@@ -27,7 +27,7 @@ class LocalAdapter():
 
     
 
-    def __init__(self, config):
+    def __init__(self, config:dict):
         """
         Constructor for LocalAdapter. Expects a python dict :param `config` 
             in the following format:
@@ -60,7 +60,7 @@ class LocalAdapter():
         self.adapter_type = "LocalAdapter"
         self.ret_dir = config["options"]["output_dir"]
 
-    def store(self, r_id):
+    def store(self, r_id:str)->str:
         """
         Store a copy of a resource in this adapter.
 
@@ -104,7 +104,7 @@ class LocalAdapter():
             [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
-    def retrieve(self, r_id):
+    def retrieve(self, r_id:str)->str:
         """
         Retrieve a copy of a resource from this adapter.
 
@@ -140,7 +140,7 @@ class LocalAdapter():
             
         return new_location
 
-    def update(self, r_id, updated_path):
+    def update(self, r_id:str, updated_path:str)->None:
         """
         Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
 
@@ -150,7 +150,7 @@ class LocalAdapter():
         """
         pass
 
-    def _store_canonical(self, current_path, r_id, checksum, filename):
+    def _store_canonical(self, current_path:str, r_id:str, checksum:str, filename:str)->str:
         """
             Store a canonical copy of a resource in this adapter.
 
@@ -198,7 +198,7 @@ class LocalAdapter():
 
         return new_location
 
-    def delete(self, r_id):
+    def delete(self, r_id:str)->None:
         """
         Delete a copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -224,7 +224,7 @@ class LocalAdapter():
                             [copy_info[0]])
         self.conn.commit()
 
-    def _delete_canonical(self, r_id):
+    def _delete_canonical(self, r_id:str)->None:
         """
         Delete a canonical copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -243,7 +243,7 @@ class LocalAdapter():
                             [copy_info[0]])
         self.conn.commit()
 
-    def load_metadata(self, r_id):
+    def load_metadata(self, r_id:str)->List[List[str]]:
         """
         Get a summary of information about a resource. That summary includes:
 
@@ -257,7 +257,7 @@ class LocalAdapter():
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
-    def get_actual_checksum(self, r_id):
+    def get_actual_checksum(self, r_id:str)->str:
         """
         Returns an exact checksum of a resource, not relying on the metadata db.
         

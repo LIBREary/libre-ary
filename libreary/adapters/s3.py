@@ -24,7 +24,7 @@ class S3Adapter:
         S3Adapter allows users to store objects in AWS S3.
     """
 
-    def __init__(self, config):
+    def __init__(self, config:dict):
         """
         Constructor for S3Adapter. Expects a python dict :param `config` 
             in the following format:
@@ -80,7 +80,7 @@ class S3Adapter:
             raise e
 
 
-    def initialize_boto_client(self):
+    def initialize_boto_client(self)->None:
         """Initialize the boto client."""
 
         self.session = self.create_session()
@@ -89,7 +89,7 @@ class S3Adapter:
         self.client = boto3.client('s3')
         self.s3 = boto3.resource('s3')
 
-    def create_session(self):
+    def create_session(self)->boto3.session.Session:
         """Create a session.
 
         First we look in self.key_file for a path to a json file with the
@@ -134,7 +134,7 @@ class S3Adapter:
         return session
 
 
-    def store(self, r_id):
+    def store(self, r_id:str)->None:
         """
         Store a copy of a resource in this adapter.
 
@@ -175,7 +175,7 @@ class S3Adapter:
             [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
-    def _store_canonical(self, current_path, r_id, checksum, filename):
+    def _store_canonical(self, current_path:str, r_id:str, checksum:str, filename:str)->str:
         """
             Store a canonical copy of a resource in this adapter.
 
@@ -216,7 +216,7 @@ class S3Adapter:
         return locator
 
 
-    def retrieve(self, r_id):
+    def retrieve(self, r_id:str)->str:
         """
         Retrieve a copy of a resource from this adapter.
 
@@ -250,7 +250,7 @@ class S3Adapter:
             
         return new_location
 
-    def update(resource_id, updated_path):
+    def update(resource_id:str, updated_path:str)->None:
         """
         Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
 
@@ -260,7 +260,7 @@ class S3Adapter:
         """
         pass
 
-    def delete(self, r_id):
+    def delete(self, r_id:str)->None:
         """
         Delete a copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -278,7 +278,7 @@ class S3Adapter:
                             [copy_info[0]])
         self.conn.commit()
 
-    def _delete_canonical(self, r_id):
+    def _delete_canonical(self, r_id:str)->None:
         """
         Delete a canonical copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -297,7 +297,7 @@ class S3Adapter:
                             [copy_info[0]])
         self.conn.commit()
 
-    def get_actual_checksum(self, r_id, delete_after_download=True):
+    def get_actual_checksum(self, r_id:str, delete_after_download:bool=True)->str:
         """
         Returns an exact checksum of a resource, not relying on the metadata db.
         
@@ -318,7 +318,7 @@ class S3Adapter:
 
         return sha1Hashed
 
-    def load_metadata(self, r_id):
+    def load_metadata(self, r_id:str)->List[List[str]]:
         """
         Get a summary of information about a resource. That summary includes:
 
