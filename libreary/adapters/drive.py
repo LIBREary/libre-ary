@@ -17,20 +17,43 @@ else:
 
 
 class GoogleDriveAdapter():
-    """docstring for LocalAdapter
+    """docstring for GoogleDriveAdapter
+        
+        An Adapter allows LIBREary to save copies of digital objects
+            to different places across cyberspace. Working with many
+            adapters in concert, one should be able do save sufficient
+            copies to places they want them.
 
-        LocalAdapter is a basic adapter which saves files
-        to a local directory specified in the adapter's config
-
-        Later in this project's plan, the LocalAdapter will be used
-        for ingesting the master copies as well as as a (probably)
-        commonly used adapter.
-
-        It's also very nice to use for testing, as saving files is easy (ish)
-        to debug and doesn't cost any money (unlike a cloud service)
+        DriveAdapter allows you to store objects in Google Drive
+        
     """
 
-    def __init__(self, config):
+    def __init__(self, config:dict):
+        """
+        Constructor for GoogleDriveAdapter. Expects a python dict :param `config`
+            in the following format:
+
+        You must have already created the Google Drive directory you wish to use for this to work.
+
+        ```{json}
+        {
+        "metadata": {
+            "db_file": "path to metadata db"
+        },
+        "adapter": {
+            "folder_path": "path to the google drive directory for storage.",
+            "adapter_identifier": "friendly identifier",
+            "adapter_type": "S3Adapter",
+            "region": "AWS Region",
+            "key_file":"Path to optional AWS key file. See create_session docs for more"
+        },
+        "options": {
+            "dropbox_dir": "path to dropbox directory",
+            "output_dir": "path to output directory"
+        },
+        "canonical":"(boolean) true if this is the canonical adapter"
+        }
+        """
         self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
         self.adapter_id = config["adapter"]["adapter_identifier"]
         self.conn = sqlite3.connect(self.metadata_db)
@@ -40,7 +63,7 @@ class GoogleDriveAdapter():
         self.adapter_type = "LocalAdapter"
         self.ret_dir = config["options"]["output_dir"]
 
-    def store(self, r_id):
+    def store(self, r_id:str) -> str:
         """
         Store assumes that the file is in the dropbox_dir
         Is this ok? if so, do we just have AdapterManager take care of this?
