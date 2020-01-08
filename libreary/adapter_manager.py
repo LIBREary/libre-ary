@@ -243,7 +243,8 @@ class AdapterManager:
         return adapter
 
     @staticmethod
-    def create_config_for_adapter(adapter_id: str, adapter_type: str, config_dir: str) -> dict:
+    def create_config_for_adapter(
+            adapter_id: str, adapter_type: str, config_dir: str) -> dict:
         """
         Static method for creating an adapter configuration. This is necessary for
         the adapter factory.

@@ -227,11 +227,15 @@ class Libreary:
                 "type":"LocalAdapter"
                 }
             ]
-        
+
             ```
         :param copies - copies to store for each adapter. Currently, only 1 is supported
         """
         str_adapters = json.dumps(adapters)
-        self.cursor.execute("insert into levels values (?, ?, ?, ?)", (name,frequency,str_adapters,copies))
+        self.cursor.execute(
+            "insert into levels values (?, ?, ?, ?)",
+            (name,
+             frequency,
+             str_adapters,
+             copies))
         self.conn.commit()
-
