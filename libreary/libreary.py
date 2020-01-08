@@ -208,3 +208,30 @@ class Libreary:
         :param r_id - the resource ID of the object you'd like to check
         """
         pass
+
+    def add_level(self, name, frequency, adapters, copies=1):
+        """
+        Add a level to the metadata database.
+
+        :param name - name for the level
+        :param frequency - check frequency for level. Currently unimplemented
+        :param adapters - dict object specifying adapters the level uses. Example:
+            ```{json}
+            [
+                {
+                "id": "local1",
+                "type":"LocalAdapter"
+                },
+                {
+                "id": "local2",
+                "type":"LocalAdapter"
+                }
+            ]
+        
+            ```
+        :param copies - copies to store for each adapter. Currently, only 1 is supported
+        """
+        str_adapters = json.dumps(adapters)
+        self.cursor.execute("insert into levels values (?, ?, ?, ?)", (name,frequency,str_adapters,copies))
+        self.conn.commit()
+

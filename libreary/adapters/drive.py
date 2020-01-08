@@ -63,6 +63,10 @@ class GoogleDriveAdapter():
         self.adapter_type = "LocalAdapter"
         self.ret_dir = config["options"]["output_dir"]
 
+
+    def authenticate(self):
+        pass
+
     def store(self, r_id:str) -> str:
         """
         Store assumes that the file is in the dropbox_dir
