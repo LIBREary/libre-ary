@@ -10,6 +10,7 @@ import sqlite3
 from libreary.adapters.BaseAdapter import BaseAdapter
 from libreary.adapters.local import LocalAdapter
 from libreary.adapters.s3 import S3Adapter
+from libreary.adapters.drive import GoogleDriveAdapter
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
 from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored
 
@@ -243,7 +244,7 @@ class AdapterManager:
 
     @staticmethod
     def create_config_for_adapter(
-            self, adapter_id: str, adapter_type: str, config_dir: str) -> dict:
+            adapter_id: str, adapter_type: str, config_dir: str) -> dict:
         """
         Static method for creating an adapter configuration. This is necessary for
         the adapter factory.
@@ -256,7 +257,7 @@ class AdapterManager:
         base_config = json.load(
             open("{}/{}_config.json".format(config_dir, adapter_id)))
         general_config = json.load(
-            open("{}/agent_config.json".format(config_dir)))
+            open("{}/config.json".format(config_dir)))
 
         full_adapter_conf = {}
         full_adapter_conf["adapter"] = base_config["adapter"]

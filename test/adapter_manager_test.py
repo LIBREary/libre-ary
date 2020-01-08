@@ -3,7 +3,7 @@ import json
 from libreary.adapter_manager import AdapterManager
 from libreary.config_parser import ConfigParser
 
-CONFIG_DIR = "/Users/ben/Desktop/libre-ary/libreary/config"
+CONFIG_DIR = "/Users/ben/Desktop/libre-ary/config"
 
 
 config = json.load(
