@@ -155,5 +155,100 @@ This file would be stored as `/path/to/config/dir/s3_config.json`
         "canonical":false
     }
 ```
+Now that we have our adapters ready, we need to add some levels. 
+
+First, think about the four parameters we need to create a level: `name, frequency, adapters,` and `copies`. The `name` is the name of your level, `frequency` is a (currently unused) check frequency, `adapters` is a JSON list representing which adapters objects at that level should be stored at (example below), and `copies`is an integer representing how many copies should be stored in that adapter (currently, only 1 is accepted).
+
+An example of an `adapters` entry is below:
+```{json}
+[
+    {
+    "id": "local1",
+    "type":"LocalAdapter"
+    },
+    {
+    "id": "local2",
+    "type":"LocalAdapter"
+    }
+]
+```
+(This should be passed in as a python dict)
+
+To do this, we instantiate LIBREary and use the `Libreary.add_level() function`. An example is below:
+```
+$ python3
+Python 3.7.6 (default, Dec 30 2019, 19:38:28) 
+[Clang 11.0.0 (clang-1100.0.33.16)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import libreary
+>>> l = libreary.Libreary("path/to/config/dir")
+>>> levels_dict = [
+{
+"id": "local1",
+"type":"LocalAdapter"
+},
+{
+"id": "local2",
+"type":"LocalAdapter"
+}
+]
+>>> l.add_level("low", "1", levels_dict, copies=1)
+```
+You can now exit Python3. The levels have been added.
+
 Interacting with LIBREary
 ------------------
+Now that your instance of LIBREary is configured, you can start to use it! This guide will go over some of the basic features of LIBREary, but not all of them. All of the functionality is documented in our [ReadTheDocs site](https://LIBRE-ary.readthedocs.io).
+
+This guide goes over interacting with LIBREary as a python object. In the works are a LIBREary web interface and a LIBREary CLI, both of which will provide nice frontends for this sort of thing, and they will have their own quickstart guides. Under the hood, they will be doing things like this.
+
+#### Object Setup
+
+First, we need a LIBREary object. Do the following:
+```{python}
+$ python3
+Python 3.7.6 (default, Dec 30 2019, 19:38:28) 
+[Clang 11.0.0 (clang-1100.0.33.16)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import libreary
+>>> l = libreary.Libreary("path/to/config/dir")
+```
+Libreary will have saved your levels from above, if your config dir is the same one.
+
+#### Object Ingestion
+
+First, let's go over ingesting an object. To ingest an object, it must be on the system you're calling LIBREary from. We suggest putting it in the `dropbox_dir`, though this is not strictly required. If you don't put it in the `dropbox_dir`, it will be copied there anyways. 
+
+Libreary-web will always upload to the `dropbox_dir`, but that's a story for another time.
+
+The parameters we need are as follows:
+```
+:param current_file_path - the current path to the file you wish to ingest
+:param levels - a list of names of levels. These levels must exist in the
+            `levels` table in the metadata db
+:param description - a description of this object. This is useful when you
+            want to search for objects later
+:param delete_after_store - Boolean. If True, the Ingester will delete the object from dropbox directory after it's stored.
+```
+This function returns the object's new LIBREary UUID. This can be used for later retrieval and modification. Don't worry if you don't save it now, you can always search for it later.
+Using the object we created above:
+
+```{python}
+obj_uuid = l.ingest("/path/to/object", ["low"], "Picture of me and my dad", True)
+print(obj_uuid)
+```
+
+And, that's it! It will now be sent to the adapters that the `low` level contains. In this case, it's the two local adapters.
+
+#### Object Retrieval
+
+Next, we'll describe how to retrieve an object. Object retrieval is simple and easy. You just need to know the object's UUID. To get this, you can save it when ingested, or search later. We'll cover `search()` soon.
+
+To retrieve an object:
+```{python}
+uuid = "1277ccb6-051c-458d-9250-570b6e085d79"
+new_path = l.retrieve(uuid)
+print(new_path)
+```
+This function returns the new path of the object after ithas been retrieved. It will place it in the path `</path/to/output/dir>/{original_filename}.{original_extension}`. **Note that this overwrites anything in the output dir that is named as this object should be. I cannot stress enough how important it is that you don't rely on the output_dir and dropbox_dir as saving their contents.** Objects that have been ingested already, of course, can always be restored using the `Libreary.retrieve()` function.
+
