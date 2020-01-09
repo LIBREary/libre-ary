@@ -252,3 +252,54 @@ print(new_path)
 ```
 This function returns the new path of the object after ithas been retrieved. It will place it in the path `</path/to/output/dir>/{original_filename}.{original_extension}`. **Note that this overwrites anything in the output dir that is named as this object should be. I cannot stress enough how important it is that you don't rely on the output_dir and dropbox_dir as saving their contents.** Objects that have been ingested already, of course, can always be restored using the `Libreary.retrieve()` function.
 
+#### Object Deletion
+
+Deleting an object is basically as simple as retrieving it. **Note that deletion cannot be undone and the python object does not ask you for confirmation.** The web and CLI interfaces will ask before deleting, but the python object will not. 
+
+```{python}
+uuid = "1277ccb6-051c-458d-9250-570b6e085d79"
+l.delete(uuid)
+```
+`Libreary.delete()` will return `None` if it is successful. It will raise an exception if it fails.
+
+#### Checking Objects, Levels, and LIBREary
+
+Checking objects will usually be carried out by objects of type `Libreary.Scheduler`, rather than being manually carried out, but there's no reason you can't do it manually. 
+
+LIBREary has three types of checks: single-object checks, single-level checks, and full-LIBREary checks.
+
+In all cases, checks can be deep or shallow. A deep check will calculate actual checksums of each copy of each object, while a shallow one will trust that the checksum in the metadata database matches that of the actual object.
+
+They have slightly different behaviors, as described below.
+
+To check a single resource:
+```{python}
+uuid = "1277ccb6-051c-458d-9250-570b6e085d79"
+l.check_single_resource(uuid, deep=False) # Defaults to False
+```
+Returns True if the resource matches, False if it doesn't but could be restored, and throws an exception if restoration attempts fail.
+
+To check a single level:
+```{python}
+l.check_single_level("low", deep=False) # Defaults to False
+```
+This returns a list of all objects which were checked, in the format of a dict per object like the following:
+[
+{
+"object_uuid":"1277ccb6-051c-458d-9250-570b6e085d79",
+"file_name":"filename.txt",
+"match": boolean (True if matches or recovery successful, False otherwise)
+},
+{
+"object_uuid":"1277ccb6-051c-458d-9250-570b6e085d79",
+"file_name":"filename2.txt",
+"match": boolean (True if matches or recovery successful, False otherwise)
+},
+]
+And so on.
+
+To check the whole LIBREary:
+```{python}
+l.run_check(deep=False) # Defaults to False
+```
+This function returns the same thing as `check_single_level()`, except the levels each object is at are included.
