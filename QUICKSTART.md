@@ -303,3 +303,16 @@ To check the whole LIBREary:
 l.run_check(deep=False) # Defaults to False
 ```
 This function returns the same thing as `check_single_level()`, except the levels each object is at are included.
+
+#### Object Searching
+
+As I mentioned before, you should not fret if you forgot an object's UUID. The Libreary.search() function exists just for this:
+
+```{python}
+list_of_hits = l.search("search terms")
+print(list_of_hits)
+```
+The list of hits will be a summary of objects matching the search terms. Search terms will check against descriptions, filenames, and UUIDs. This way, if you partially remember a UUID, you should still be able to find the right file. Each entry in the list of hits will contain the following information:
+`id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+

@@ -209,7 +209,7 @@ class Libreary:
         """
         pass
 
-    def add_level(self, name, frequency, adapters, copies=1):
+    def add_level(self, name: str, frequency: int, adapters: List[dict], copies=1) -> None:
         """
         Add a level to the metadata database.
 
