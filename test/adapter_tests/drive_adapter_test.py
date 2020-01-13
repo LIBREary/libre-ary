@@ -11,4 +11,4 @@ config = json.load(
 am = AdapterManager(config)
 am.create_adapter("GoogleDriveAdapter", "drive", CONFIG_DIR)
 
-print(am.verify_adapter("drive"))
+#print(am.verify_adapter("drive"))

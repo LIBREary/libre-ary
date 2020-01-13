@@ -15,6 +15,10 @@ except ImportError:
 else:
     _google_enabled = True
 
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
+from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
+
+SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 
 class GoogleDriveAdapter():
     """docstring for GoogleDriveAdapter
@@ -58,16 +62,77 @@ class GoogleDriveAdapter():
         self.adapter_id = config["adapter"]["adapter_identifier"]
         self.conn = sqlite3.connect(self.metadata_db)
         self.cursor = self.conn.cursor()
-        self.storage_dir = config["adapter"]["storage_dir"]
+        self.token_file = config["adapter"]["token_file"]
         self.dropbox_dir = config["options"]["dropbox_dir"]
         self.adapter_type = "LocalAdapter"
         self.ret_dir = config["options"]["output_dir"]
+        self.credentials_file = config["adapter"]["credentials_file"]
+
+        if not _google_enabled:
+            raise OptionalModuleMissingException(
+                ['googleapiclient'], "Google Drive adapter requires the googleapiclient module.")
+
+        self.get_google_client()
+
+    def get_google_client(self):
+        """
+        Build a Google Drive client object.
+
+        Important to note that this uses an OAUTH flow, so you'll 
+        need to run it from a computer that has a web browser you can use.
+
+        Store the creds JSON file in the place you note in `config["adapter"]["credentials_file"]`
+        A token will be stored in `config["adapter"]["token_file"]`.
+
+        If you are running LIBREary on a headless server, I recommend getting a token first,
+        and saving the token file on the server, so that you don't need to mess around with 
+        headless browsers etc.
+
+        Get creds JSON file from here: 
+            https://developers.google.com/drive/api/v3/quickstart/python?authuser=3
+        """
+        creds = None
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+
+        # We save this in the self.config["token_file"] file
+        if os.path.exists(self.token_file):
+            with open(self.token_file, 'rb') as token:
+                creds = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(self.credentials_file, SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open(self.token_file, 'wb') as token:
+                pickle.dump(creds, token)
+
+        service = build('drive', 'v3', credentials=creds)
+
+        # Call the Drive v3 API
+        results = service.files().list(
+            pageSize=10, fields="nextPageToken, files(id, name)").execute()
+        items = results.get('files', [])
+
+        if not items:
+            print('No files found.')
+        else:
+            print('Files:')
+            for item in items:
+                print(u'{0} ({1})'.format(item['name'], item['id']))
 
     def store(self, r_id:str) -> str:
         """
-        Store assumes that the file is in the dropbox_dir
-        Is this ok? if so, do we just have AdapterManager take care of this?
+        Store a copy of a resource in this adapter.
 
+        Store assumes that the file is in the `dropbox_dir`.
+        AdapterManager will always verify that this is the case.
+
+        :param r_id - the resource to store's UUID
         """
         file_metadata = self.load_metadata(r_id)[0]
         dropbox_path = file_metadata[1]
