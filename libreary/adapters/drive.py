@@ -9,6 +9,8 @@ try:
     from googleapiclient.discovery import build
     from google_auth_oauthlib.flow import InstalledAppFlow
     from google.auth.transport.requests import Request
+    from pydrive.auth import GoogleAuth
+    from apiclient.http import MediaFileUpload,MediaIoBaseDownload
 
 except ImportError:
     _google_enabled = False
@@ -18,7 +20,7 @@ else:
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
 from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
 
-SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 class GoogleDriveAdapter():
     """docstring for GoogleDriveAdapter
@@ -45,11 +47,10 @@ class GoogleDriveAdapter():
             "db_file": "path to metadata db"
         },
         "adapter": {
-            "folder_path": "path to the google drive directory for storage.",
+            "folder_path": "Name of google drive folder for storage. LIBREary will create this folder",
             "adapter_identifier": "friendly identifier",
-            "adapter_type": "S3Adapter",
-            "region": "AWS Region",
-            "key_file":"Path to optional AWS key file. See create_session docs for more"
+            "adapter_type": "GoogleDriveAdapter",
+            "credentials_file":"Path to credentials file. See get_google_client docs for more"
         },
         "options": {
             "dropbox_dir": "path to dropbox directory",
@@ -64,6 +65,7 @@ class GoogleDriveAdapter():
         self.cursor = self.conn.cursor()
         self.token_file = config["adapter"]["token_file"]
         self.dropbox_dir = config["options"]["dropbox_dir"]
+        self.folder_path = config["adapter"]["folder_path"]
         self.adapter_type = "LocalAdapter"
         self.ret_dir = config["options"]["output_dir"]
         self.credentials_file = config["adapter"]["credentials_file"]
@@ -73,8 +75,9 @@ class GoogleDriveAdapter():
                 ['googleapiclient'], "Google Drive adapter requires the googleapiclient module.")
 
         self.get_google_client()
+        self.dir_id = self._get_or_create_folder()
 
-    def get_google_client(self):
+    def get_google_client(self) -> None:
         """
         Build a Google Drive client object.
 
@@ -91,6 +94,10 @@ class GoogleDriveAdapter():
         Get creds JSON file from here: 
             https://developers.google.com/drive/api/v3/quickstart/python?authuser=3
         """
+
+        #gauth = GoogleAuth()
+        # Create local webserver and auto handles authentication.
+        #gauth.LocalWebserverAuth()
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -111,19 +118,64 @@ class GoogleDriveAdapter():
             with open(self.token_file, 'wb') as token:
                 pickle.dump(creds, token)
 
-        service = build('drive', 'v3', credentials=creds)
+        self.service = build('drive', 'v3', credentials=creds)
 
-        # Call the Drive v3 API
-        results = service.files().list(
-            pageSize=10, fields="nextPageToken, files(id, name)").execute()
+    def _list_objects(self):
+        """
+        Sanity-check method for devs to use. Lists top 1000 items in drive
+        """
+        results = self.service.files().list(
+            pageSize=1000, fields="nextPageToken, files(id, name)").execute()
         items = results.get('files', [])
 
         if not items:
             print('No files found.')
         else:
-            print('Files:')
             for item in items:
-                print(u'{0} ({1})'.format(item['name'], item['id']))
+                print(item)
+
+    def _get_or_create_folder(self):
+
+        page_token = None
+        dir_id = None
+        response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and name='{}'".format(self.folder_path),
+                                      spaces='drive',
+                                      fields='nextPageToken, files(id, name)',
+                                      pageToken=page_token).execute()
+        for file in response.get('files', []):
+            dir_id = file.get('id')
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
+
+        if not dir_id:
+            file_metadata = {
+                'name': self.folder_path,
+                'mimeType': 'application/vnd.google-apps.folder'
+                }
+            file = self.service.files().create(body=file_metadata,
+                                    fields='id').execute()
+            dir_id = file.get('id')
+
+        return dir_id
+
+
+    def _upload_file(self, filename, current_path):
+        """
+        Helper method to upload a file to drive, in the directory
+        LIBRE-ary is configured to use.
+        """
+        file_metadata = {'name': filename,
+                        'parents': [self.dir_id]}
+        media = MediaFileUpload(current_path,
+                        mimetype='image/jpeg')
+        file = self.service.files().create(body=file_metadata,
+                                    media_body=media,
+                                    fields='id').execute()
+        f_id = file.get('id')
+        return f_id
+
+        
 
     def store(self, r_id:str) -> str:
         """
@@ -139,18 +191,11 @@ class GoogleDriveAdapter():
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
-        new_location = os.path.expanduser(
-            "{}/{}".format(self.storage_dir, name))
-        new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
-        if not os.path.isdir(new_dir):
-            os.makedirs(new_dir)
-
-        if os.path.isfile(new_location):
-            new_location = "{}_{}".format(new_location, r_id)
+        new_name = "{}_{}".format(r_id, name)
 
         other_copies = self.cursor.execute(
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
@@ -160,14 +205,14 @@ class GoogleDriveAdapter():
             return
 
         if sha1Hashed == checksum:
-            copyfile(current_location, new_location)
+            locator = self._upload_file(filename, current_path)
         else:
             print("Checksum Mismatch")
             raise Exception
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, False])
+            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
     def retrieve(self, r_id):
@@ -199,24 +244,15 @@ class GoogleDriveAdapter():
 
     def _store_canonical(self, current_path, r_id, checksum, filename):
         """
-            If we're using the LocalAdapter as a canonical adapter, we need
+            If we're using the GoogleDrive as a canonical adapter, we need
             to be able to store from a current path, taking in a generated UUID,
             rather than looking info up from the database.
         """
-        current_location = current_path
-        name = filename
-        new_location = os.path.expanduser(
-            "{}/{}_canonical".format(self.storage_dir, filename))
-        new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
-        sha1Hash = hashlib.sha1(open(current_location, "rb").read())
+        new_name = "{}_{}".format(r_id, filename)
+
+        sha1Hash = hashlib.sha1(open(current_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
-
-        if not os.path.isdir(new_dir):
-            os.makedirs(new_dir)
-
-        if os.path.isfile(new_location):
-            new_location = "{}_{}".format(new_location, r_id)
 
         sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format(
             str(r_id), self.adapter_id)
@@ -226,18 +262,16 @@ class GoogleDriveAdapter():
             raise StorageFailedException
 
         if sha1Hashed == checksum:
-            copyfile(current_location, new_location)
+            locator = self._upload_file(new_name, current_path)
         else:
-            print("Checksum Mismatch")
-            raise Exception
-            exit()
+            raise ChecksumMismatchException
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, True])
+            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, True])
         self.conn.commit()
 
-        return new_location
+        return locator
 
     def delete(self, r_id):
         copy_info = self.cursor.execute(
@@ -251,9 +285,9 @@ class GoogleDriveAdapter():
         copy_info = copy_info[0]
 
         expected_hash = copy_info[4]
-        copy_path = copy_info[3]
+        copy_locator = copy_info[3]
 
-        os.remove(copy_path)
+        self.service.files().delete(fileId=copy_locator).execute()
 
         self.cursor.execute("delete from copies where copy_id=?",
                             [copy_info[0]])
@@ -276,9 +310,12 @@ class GoogleDriveAdapter():
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
-    def get_actual_checksum(self, r_id):
+    def get_actual_checksum(self, r_id, deep=False):
         """
-        Return an exact checksum of a resource, not relying on the metadata db
+        Return an exact checksum of a resource, not relying on the metadata db.
+
+        The :param deep trusts the tag we've given google drive on ingestion,
+        if True, it will retrieve and recompute
         """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",

@@ -183,7 +183,7 @@ class AdapterManager:
         :param adapter_type - the type of the adapter you wish to create.
             Must be the actual class name, i.e. "LocalAdapter".
         """
-        adapter = self.create_adapter(adapter_type, adapter_id)
+        adapter = self.create_adapter(adapter_type, adapter_id, self.config_dir)
         self.adapters["adapter_id"] = adapter
         return adapter
 
