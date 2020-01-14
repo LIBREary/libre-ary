@@ -71,7 +71,7 @@ class S3Adapter:
         self.profile = self.config["adapter"].get("profile")
         self.key_file = self.config["adapter"].get("key_file")
         self.bucket_name = self.config["adapter"].get("bucket_name")
-        self.region = self.config["adapter"].get("bucket_name")
+        self.region = self.config["adapter"].get("region", "us-west-2")
 
         self.env_specified = os.getenv("AWS_ACCESS_KEY_ID") is not None and os.getenv(
             "AWS_SECRET_ACCESS_KEY") is not None
@@ -83,6 +83,8 @@ class S3Adapter:
             self.initialize_boto_client()
         except Exception as e:
             raise e
+
+        self._create_bucket_if_nonexistent()
 
     def initialize_boto_client(self) -> None:
         """Initialize the boto client."""
@@ -136,6 +138,22 @@ class S3Adapter:
             session = boto3.session.Session(region_name=self.region)
 
         return session
+
+    def _create_bucket_if_nonexistent(self) -> None:
+        """
+        Create the S3 bucket we will need if it doesn't already exist
+        """
+        print(self.region)
+        location = {'LocationConstraint': self.region}
+        response = self.client.list_buckets()
+        buckets = [bucket['Name'] for bucket in response['Buckets']]
+        print(buckets)
+
+        if self.bucket_name in buckets:
+            return
+
+        self.s3.create_bucket(Bucket=self.bucket_name,
+                              CreateBucketConfiguration=location)
 
     def store(self, r_id: str) -> None:
         """
