@@ -53,7 +53,8 @@ class GoogleDriveAdapter():
             "folder_path": "Name of google drive folder for storage. LIBREary will create this folder",
             "adapter_identifier": "friendly identifier",
             "adapter_type": "GoogleDriveAdapter",
-            "credentials_file":"Path to credentials file. See get_google_client docs for more"
+            "credentials_file":"Path to credentials file. See get_google_client docs for more",
+            "token_file":"Path to place you want to save a token file",
         },
         "options": {
             "dropbox_dir": "path to dropbox directory",
@@ -135,7 +136,10 @@ class GoogleDriveAdapter():
                 print(item)
 
     def _get_or_create_folder(self):
-
+        """
+        If the folder specified in config exists, get its id.
+        If not, create it.
+        """
         page_token = None
         dir_id = None
         response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and name='{}'".format(self.folder_path),
@@ -163,6 +167,9 @@ class GoogleDriveAdapter():
         """
         Helper method to upload a file to drive, in the directory
         LIBRE-ary is configured to use.
+
+        :param filename - name of file to upload
+        :param current_path - place where the file is right now
         """
         file_metadata = {'name': filename,
                          'parents': [self.dir_id]}
@@ -212,6 +219,18 @@ class GoogleDriveAdapter():
         self.conn.commit()
 
     def retrieve(self, r_id):
+        """
+        Retrieve a copy of a resource from this adapter.
+
+        Retrieve assumes that the file can be stored to the `output_dir`.
+        AdapterManager will always verify that this is the case.
+
+        Returns the path to the resource.
+
+        May overwrite files in the `output_dir`
+
+        :param r_id - the resource to retrieve's UUID
+        """
         try:
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
@@ -236,6 +255,13 @@ class GoogleDriveAdapter():
         return new_location
 
     def _download_file(self, locator, new_loc):
+        """
+        Helper method to download a file from drive, in the directory
+        LIBRE-ary is configured to use.
+
+        :param locator - google drive ID
+        :param new_loc - place the file should go
+        """
         request = self.service.files().get_media(fileId=locator)
         Path(new_loc).touch()
         fh = open(new_loc, "wb")
@@ -245,6 +271,13 @@ class GoogleDriveAdapter():
             status, done = downloader.next_chunk()
 
     def update(self, r_id, updated):
+        """
+        Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
+
+        :param r_id - the UUID of the object you'd like to update
+        :param updated_path - path to the contents of the updated object.
+
+        """
         pass
 
     def _store_canonical(self, current_path, r_id, checksum, filename):
@@ -252,6 +285,11 @@ class GoogleDriveAdapter():
             If we're using the GoogleDrive as a canonical adapter, we need
             to be able to store from a current path, taking in a generated UUID,
             rather than looking info up from the database.
+
+            :param current_path - current path to object
+            :param r_id - UUID of resource you're storing
+            :param checksum - checksum of resource
+            :param filename - filename of resource you're storing
         """
 
         new_name = "{}_{}".format(r_id, filename)
@@ -279,6 +317,12 @@ class GoogleDriveAdapter():
         return locator
 
     def delete(self, r_id):
+        """
+        Delete a copy of a resource from this adapter.
+        Delete the corresponding entry in the `copies` table.
+
+        :param r_id - the resource to retrieve's UUID
+        """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()
@@ -297,6 +341,12 @@ class GoogleDriveAdapter():
         self.conn.commit()
 
     def _delete_canonical(self, r_id):
+        """
+        Delete a canonical copy of a resource from this adapter.
+        Delete the corresponding entry in the `copies` table.
+
+        :param r_id - the resource to retrieve's UUID
+        """
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -309,6 +359,16 @@ class GoogleDriveAdapter():
         self.conn.commit()
 
     def load_metadata(self, r_id):
+        """
+        Get a summary of information about a resource. That summary includes:
+
+        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
+
+        :param r_id - UUID of resource you'd like to learn about
+        """
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
