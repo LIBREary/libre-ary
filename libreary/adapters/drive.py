@@ -283,7 +283,6 @@ class GoogleDriveAdapter():
             return
 
         copy_info = copy_info[0]
-
         expected_hash = copy_info[4]
         copy_locator = copy_info[3]
 
@@ -298,9 +297,9 @@ class GoogleDriveAdapter():
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
         expected_hash = copy_info[4]
-        copy_path = copy_info[3]
+        copy_locator = copy_info[3]
 
-        os.remove(copy_path)
+        self.service.files().delete(fileId=copy_locator).execute()
 
         self.cursor.execute("delete from copies where copy_id=?",
                             [copy_info[0]])
@@ -310,17 +309,19 @@ class GoogleDriveAdapter():
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
-    def get_actual_checksum(self, r_id, deep=False):
+    def get_actual_checksum(self, r_id, delete_after_download: bool = True):
         """
         Return an exact checksum of a resource, not relying on the metadata db.
 
         The :param deep trusts the tag we've given google drive on ingestion,
         if True, it will retrieve and recompute
         """
-        copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
-        path = copy_info[3]
-        hash_obj = hashlib.sha1(open(path, "rb").read())
-        checksum = hash_obj.hexdigest()
-        return checksum
+        new_path = self.retrieve(r_id)
+
+        sha1Hash = hashlib.sha1(open(new_path, "rb").read())
+        sha1Hashed = sha1Hash.hexdigest()
+
+        if delete_after_download:
+            os.remove(new_path)
+
+        return sha1Hashed
