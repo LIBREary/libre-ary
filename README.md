@@ -1,4 +1,5 @@
-# LIBREary
+# LIBREary [![Documentation Status](https://readthedocs.org/projects/libre-ary/badge/?version=master)](https://libre-ary.readthedocs.io/en/master/?badge=master)
+
 
 ## What is this?
 

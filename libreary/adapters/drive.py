@@ -135,7 +135,7 @@ class GoogleDriveAdapter():
             for item in items:
                 print(item)
 
-    def _get_or_create_folder(self):
+    def store(self, r_id:str) -> str:
         """
         If the folder specified in config exists, get its id.
         If not, create it.
