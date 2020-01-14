@@ -256,7 +256,7 @@ class GoogleDriveAdapter():
 
         return new_location
 
-    def _download_file(self, locator: str, new_loc:str ) -> None:
+    def _download_file(self, locator: str, new_loc: str) -> None:
         """
         Helper method to download a file from drive, in the directory
         LIBRE-ary is configured to use.
@@ -282,7 +282,8 @@ class GoogleDriveAdapter():
         """
         pass
 
-    def _store_canonical(self, current_path: str, r_id: str, checksum: str, filename: str) -> str:
+    def _store_canonical(self, current_path: str, r_id: str,
+                         checksum: str, filename: str) -> str:
         """
             If we're using the GoogleDrive as a canonical adapter, we need
             to be able to store from a current path, taking in a generated UUID,

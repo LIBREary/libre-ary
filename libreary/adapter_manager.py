@@ -220,11 +220,8 @@ class AdapterManager:
                             (None, locator, "low,", "libreary_test_file.txt", real_checksum, r_id, "A resource for testing LIBREary adapters with"))
         self.conn.commit()
 
-
         new_path = adapter.retrieve(r_id)
         new_checksum = hashlib.sha1(open(new_path, "rb").read()).hexdigest()
-
-
 
         r_val = False
         if new_checksum == real_checksum:
