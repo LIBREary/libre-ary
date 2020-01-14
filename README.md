@@ -32,7 +32,7 @@ LIBREary is a python package, and can be istalled using python3's setup tools. F
 `python3 setup.py install`
 
 
-After the `0.0.1` release (scheduled for 1/15/2019), LIBREary will be uploaded to the Python Package Index (PyPI) and will be `pip` installable.
+LIBREary is now `pip` installable! Try `pip3 install libreary==0.0.1`!
 
 ## How do I interact with LIBRE-ary?
 
