@@ -183,7 +183,8 @@ class AdapterManager:
         :param adapter_type - the type of the adapter you wish to create.
             Must be the actual class name, i.e. "LocalAdapter".
         """
-        adapter = self.create_adapter(adapter_type, adapter_id, self.config_dir)
+        adapter = self.create_adapter(
+            adapter_type, adapter_id, self.config_dir)
         self.adapters["adapter_id"] = adapter
         return adapter
 
@@ -243,7 +244,8 @@ class AdapterManager:
         return adapter
 
     @staticmethod
-    def create_config_for_adapter(adapter_id: str, adapter_type: str, config_dir: str) -> dict:
+    def create_config_for_adapter(
+            adapter_id: str, adapter_type: str, config_dir: str) -> dict:
         """
         Static method for creating an adapter configuration. This is necessary for
         the adapter factory.

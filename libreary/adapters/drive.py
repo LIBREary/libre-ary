@@ -12,7 +12,7 @@ try:
     from google_auth_oauthlib.flow import InstalledAppFlow
     from google.auth.transport.requests import Request
     from pydrive.auth import GoogleAuth
-    from apiclient.http import MediaFileUpload,MediaIoBaseDownload
+    from apiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 except ImportError:
     _google_enabled = False
@@ -24,19 +24,20 @@ from libreary.exceptions import RestorationFailedException, AdapterCreationFaile
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
+
 class GoogleDriveAdapter():
     """docstring for GoogleDriveAdapter
-        
+
         An Adapter allows LIBREary to save copies of digital objects
             to different places across cyberspace. Working with many
             adapters in concert, one should be able do save sufficient
             copies to places they want them.
 
         DriveAdapter allows you to store objects in Google Drive
-        
+
     """
 
-    def __init__(self, config:dict):
+    def __init__(self, config: dict):
         """
         Constructor for GoogleDriveAdapter. Expects a python dict :param `config`
             in the following format:
@@ -83,23 +84,19 @@ class GoogleDriveAdapter():
         """
         Build a Google Drive client object.
 
-        Important to note that this uses an OAUTH flow, so you'll 
+        Important to note that this uses an OAUTH flow, so you'll
         need to run it from a computer that has a web browser you can use.
 
         Store the creds JSON file in the place you note in `config["adapter"]["credentials_file"]`
         A token will be stored in `config["adapter"]["token_file"]`.
 
         If you are running LIBREary on a headless server, I recommend getting a token first,
-        and saving the token file on the server, so that you don't need to mess around with 
+        and saving the token file on the server, so that you don't need to mess around with
         headless browsers etc.
 
-        Get creds JSON file from here: 
+        Get creds JSON file from here:
             https://developers.google.com/drive/api/v3/quickstart/python?authuser=3
         """
-
-        #gauth = GoogleAuth()
-        # Create local webserver and auto handles authentication.
-        #gauth.LocalWebserverAuth()
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -114,7 +111,8 @@ class GoogleDriveAdapter():
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(self.credentials_file, SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    self.credentials_file, SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
             with open(self.token_file, 'wb') as token:
@@ -141,9 +139,9 @@ class GoogleDriveAdapter():
         page_token = None
         dir_id = None
         response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and name='{}'".format(self.folder_path),
-                                      spaces='drive',
-                                      fields='nextPageToken, files(id, name)',
-                                      pageToken=page_token).execute()
+                                             spaces='drive',
+                                             fields='nextPageToken, files(id, name)',
+                                             pageToken=page_token).execute()
         for file in response.get('files', []):
             dir_id = file.get('id')
             page_token = response.get('nextPageToken', None)
@@ -154,13 +152,12 @@ class GoogleDriveAdapter():
             file_metadata = {
                 'name': self.folder_path,
                 'mimeType': 'application/vnd.google-apps.folder'
-                }
+            }
             file = self.service.files().create(body=file_metadata,
-                                    fields='id').execute()
+                                               fields='id').execute()
             dir_id = file.get('id')
 
         return dir_id
-
 
     def _upload_file(self, filename, current_path):
         """
@@ -168,18 +165,16 @@ class GoogleDriveAdapter():
         LIBRE-ary is configured to use.
         """
         file_metadata = {'name': filename,
-                        'parents': [self.dir_id]}
+                         'parents': [self.dir_id]}
         media = MediaFileUpload(current_path,
-                        mimetype='image/jpeg')
+                                mimetype='image/jpeg')
         file = self.service.files().create(body=file_metadata,
-                                    media_body=media,
-                                    fields='id').execute()
+                                           media_body=media,
+                                           fields='id').execute()
         f_id = file.get('id')
         return f_id
 
-        
-
-    def store(self, r_id:str) -> str:
+    def store(self, r_id: str) -> str:
         """
         Store a copy of a resource in this adapter.
 
@@ -189,7 +184,6 @@ class GoogleDriveAdapter():
         :param r_id - the resource to store's UUID
         """
         file_metadata = self.load_metadata(r_id)[0]
-        dropbox_path = file_metadata[1]
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
@@ -207,7 +201,7 @@ class GoogleDriveAdapter():
             return
 
         if sha1Hashed == checksum:
-            locator = self._upload_file(filename, current_path)
+            locator = self._upload_file(new_name, current_location)
         else:
             print("Checksum Mismatch")
             raise Exception
@@ -294,7 +288,6 @@ class GoogleDriveAdapter():
             return
 
         copy_info = copy_info[0]
-        expected_hash = copy_info[4]
         copy_locator = copy_info[3]
 
         self.service.files().delete(fileId=copy_locator).execute()
@@ -307,7 +300,6 @@ class GoogleDriveAdapter():
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
-        expected_hash = copy_info[4]
         copy_locator = copy_info[3]
 
         self.service.files().delete(fileId=copy_locator).execute()
@@ -320,7 +312,8 @@ class GoogleDriveAdapter():
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
-    def get_actual_checksum(self, r_id: str, delete_after_download: bool = True) -> str:
+    def get_actual_checksum(self, r_id: str,
+                            delete_after_download: bool = True) -> str:
         """
         Return an exact checksum of a resource, not relying on the metadata db.
 

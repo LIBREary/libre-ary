@@ -41,6 +41,6 @@ class NoCopyExistsException(Exception):
 class AdapterRestored(Exception):
     pass
 
-    
+
 class ConfigurationError:
     pass
