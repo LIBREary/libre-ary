@@ -6,6 +6,8 @@ import json
 import pickle
 import io
 from pathlib import Path
+from typing import List
+
 
 try:
     from googleapiclient.discovery import build
@@ -121,7 +123,7 @@ class GoogleDriveAdapter():
 
         self.service = build('drive', 'v3', credentials=creds)
 
-    def _list_objects(self):
+    def _list_objects(self) -> None:
         """
         Sanity-check method for devs to use. Lists top 1000 items in drive
         """
@@ -135,7 +137,7 @@ class GoogleDriveAdapter():
             for item in items:
                 print(item)
 
-    def store(self, r_id:str) -> str:
+    def store(self, r_id: str) -> str:
         """
         If the folder specified in config exists, get its id.
         If not, create it.
@@ -163,7 +165,7 @@ class GoogleDriveAdapter():
 
         return dir_id
 
-    def _upload_file(self, filename, current_path):
+    def _upload_file(self, filename: str, current_path: str) -> str:
         """
         Helper method to upload a file to drive, in the directory
         LIBRE-ary is configured to use.
@@ -218,7 +220,7 @@ class GoogleDriveAdapter():
             [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
         self.conn.commit()
 
-    def retrieve(self, r_id):
+    def retrieve(self, r_id: str) -> str:
         """
         Retrieve a copy of a resource from this adapter.
 
@@ -250,11 +252,11 @@ class GoogleDriveAdapter():
         if real_hash == expected_hash:
             self._download_file(copy_locator, new_location)
         else:
-            print("Checksum Mismatch")
+            raise ChecksumMismatchException
 
         return new_location
 
-    def _download_file(self, locator, new_loc):
+    def _download_file(self, locator: str, new_loc:str ) -> None:
         """
         Helper method to download a file from drive, in the directory
         LIBRE-ary is configured to use.
@@ -270,7 +272,7 @@ class GoogleDriveAdapter():
         while done is False:
             status, done = downloader.next_chunk()
 
-    def update(self, r_id, updated):
+    def update(self, r_id: str, updated: str) -> None:
         """
         Update a resource with a new object. Preserves UUID and all other metadata (levels, etc.)
 
@@ -280,7 +282,7 @@ class GoogleDriveAdapter():
         """
         pass
 
-    def _store_canonical(self, current_path, r_id, checksum, filename):
+    def _store_canonical(self, current_path: str, r_id: str, checksum: str, filename: str) -> str:
         """
             If we're using the GoogleDrive as a canonical adapter, we need
             to be able to store from a current path, taking in a generated UUID,
@@ -316,7 +318,7 @@ class GoogleDriveAdapter():
 
         return locator
 
-    def delete(self, r_id):
+    def delete(self, r_id: str) -> None:
         """
         Delete a copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -340,7 +342,7 @@ class GoogleDriveAdapter():
                             [copy_info[0]])
         self.conn.commit()
 
-    def _delete_canonical(self, r_id):
+    def _delete_canonical(self, r_id: str) -> None:
         """
         Delete a canonical copy of a resource from this adapter.
         Delete the corresponding entry in the `copies` table.
@@ -358,7 +360,7 @@ class GoogleDriveAdapter():
                             [copy_info[0]])
         self.conn.commit()
 
-    def load_metadata(self, r_id):
+    def load_metadata(self, r_id: str) -> List[List[str]]:
         """
         Get a summary of information about a resource. That summary includes:
 
