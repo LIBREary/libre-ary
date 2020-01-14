@@ -36,7 +36,7 @@ LIBREary is now `pip` installable! Try `pip3 install libreary==0.0.1`!
 
 ## How do I interact with LIBRE-ary?
 
-Please see the quickstart guide or [our docs](https://libre-ary.readthedocs.io) for usage information.
+Please see the [quickstart guide](https://github.com/benhg/libre-ary/blob/master/QUICKSTART.md) or [our docs](https://libre-ary.readthedocs.io) for usage information.
 
 ## How should I cite or use LIBREary?
 
