@@ -206,13 +206,20 @@ class AdapterManager:
         real_checksum = hashlib.sha1(
             open(dropbox_path, "rb").read()).hexdigest()
         r_id = "LIBREARY_TEST_RESORURCE"
+
         # To circumvent full ingestion process, we manually use _ingest_canonical
         # Not recommended for end users to do this.
-        adapter._store_canonical(
+        locator = adapter._store_canonical(
             dropbox_path,
             r_id,
             real_checksum,
             "libreary_test_resource.txt")
+
+        # Do minimal ingestion so that adapter knows what it needs to retrieve
+        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)",
+                            (None, locator, "low,", "libreary_test_file.txt", real_checksum, r_id, "A resource for testing LIBREary adapters with"))
+        self.conn.commit()
+
         new_path = adapter.retrieve(r_id)
         new_checksum = hashlib.sha1(open(new_path, "rb").read()).hexdigest()
 
@@ -221,8 +228,18 @@ class AdapterManager:
             r_val = True
 
         adapter._delete_canonical(r_id)
-        os.remove(new_path)
+
+        try:
+            os.remove(new_path)
+        except Exception:
+            pass
+
         os.remove(dropbox_path)
+
+        # Delete from res table
+        self.cursor.execute("delete from resources where uuid=?",
+                            (r_id,))
+        self.conn.commit()
 
         return r_val
 
