@@ -4,6 +4,8 @@ from shutil import copyfile
 import hashlib
 import json
 import pickle
+import io
+from pathlib import Path
 
 try:
     from googleapiclient.discovery import build
@@ -227,17 +229,26 @@ class GoogleDriveAdapter():
         except IndexError:
             raise NoCopyExistsException
         expected_hash = copy_info[4]
-        copy_path = copy_info[3]
+        copy_locator = copy_info[3]
         real_hash = copy_info[4]
 
         new_location = "{}/{}".format(self.ret_dir, filename)
 
         if real_hash == expected_hash:
-            copyfile(copy_path, new_location)
+            self._download_file(copy_locator, new_location)
         else:
             print("Checksum Mismatch")
 
         return new_location
+
+    def _download_file(self, locator, new_loc):
+        request = self.service.files().get_media(fileId=locator)
+        Path(new_loc).touch()
+        fh = open(new_loc, "wb")
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
 
     def update(self, r_id, updated):
         pass
@@ -309,7 +320,7 @@ class GoogleDriveAdapter():
         return self.cursor.execute(
             "select * from resources where uuid='{}'".format(r_id)).fetchall()
 
-    def get_actual_checksum(self, r_id, delete_after_download: bool = True):
+    def get_actual_checksum(self, r_id: str, delete_after_download: bool = True) -> str:
         """
         Return an exact checksum of a resource, not relying on the metadata db.
 
