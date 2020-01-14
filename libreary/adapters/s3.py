@@ -153,7 +153,7 @@ class S3Adapter:
             return
 
         self.s3.create_bucket(Bucket=self.bucket_name,
-                                CreateBucketConfiguration=location)
+                              CreateBucketConfiguration=location)
 
     def store(self, r_id: str) -> None:
         """
