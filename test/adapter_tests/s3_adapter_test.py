@@ -3,12 +3,12 @@ import json
 from libreary.adapter_manager import AdapterManager
 from libreary.config_parser import ConfigParser
 
-CONFIG_DIR = "/Users/ben/Desktop/libre-ary/libreary/config"
+CONFIG_DIR = "/Users/ben/Desktop/libre-ary/config"
 
 
 config = json.load(
-        open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
+        open("{}/{}".format(CONFIG_DIR, "config.json")))
 am = AdapterManager(config)
-am.create_adapter("S3Adapter", "s3")
+am.set_additional_adapter("s3", "S3Adapter")
 
 print(am.verify_adapter("s3"))
