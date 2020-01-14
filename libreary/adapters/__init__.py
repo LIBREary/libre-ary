@@ -5,5 +5,4 @@ from libreary.adapters.drive import GoogleDriveAdapter
 
 __all__ = ['S3Adapter',
            'LocalAdapter',
-           'GoogleDriveAdapter'
-           ]
+           'GoogleDriveAdapter']

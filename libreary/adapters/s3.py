@@ -315,7 +315,7 @@ class S3Adapter:
         :param delete_after_download - True if the file should be downloaded after the
             checksum is calculated
         """
-        new_path = self.retrieve("r_id")
+        new_path = self.retrieve(r_id)
 
         sha1Hash = hashlib.sha1(open(new_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()

@@ -3,11 +3,11 @@
             "db_file": "/Users/ben/desktop/libre-ary/libreary/metadata/md_index.db"
         },
         "adapter": {
-            "bucket_name": "libreary-bucket",
-            "adapter_identifier": "s3",
-            "adapter_type": "S3Adapter",
-            "region": "us-west-2",
-            "key_file":"/Users/ben/desktop/aws_keys.json"
+            "adapter_identifier": "drive",
+            "adapter_type": "GoogleDriveAdapter",
+            "token_file":"/Users/ben/desktop/libre-ary/config/token.pickle",
+            "credentials_file": "/Users/ben/desktop/libre-ary/config/google_creds.json",
+            "folder_path":"LIBREary-storage-dir"
         },
         "options": {
             "dropbox_dir": "dropbox",
