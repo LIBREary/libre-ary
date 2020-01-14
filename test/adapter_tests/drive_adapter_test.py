@@ -9,8 +9,8 @@ config = json.load(
         open("{}/{}".format(CONFIG_DIR, "config.json")))
 am = AdapterManager(config)
 a = am.set_additional_adapter("drive","GoogleDriveAdapter" )
-print(a._store_canonical("/Users/ben/Desktop/grace.jpg", "34", "6b4f683d08d5431b5f8d1c8f4071610d5cab758d", "grace.jpg"))
-a.retrieve("34")
+# print(a._store_canonical("/Users/ben/Desktop/grace.jpg", "34", "6b4f683d08d5431b5f8d1c8f4071610d5cab758d", "grace.jpg"))
+# a.retrieve("34")
 
 
-#print(am.verify_adapter("drive"))
+print(am.verify_adapter("drive"))

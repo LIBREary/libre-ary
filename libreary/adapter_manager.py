@@ -185,7 +185,7 @@ class AdapterManager:
         """
         adapter = self.create_adapter(
             adapter_type, adapter_id, self.config_dir)
-        self.adapters["adapter_id"] = adapter
+        self.adapters[adapter_id] = adapter
         return adapter
 
     def verify_adapter(self, adapter_id: str) -> bool:
@@ -205,7 +205,7 @@ class AdapterManager:
             fh.write(data_to_store)
         real_checksum = hashlib.sha1(
             open(dropbox_path, "rb").read()).hexdigest()
-        r_id = "LIBREARY_TEST_RESOURCE"
+        r_id = "LIBREARY_TEST_RESORURCE"
         # To circumvent full ingestion process, we manually use _ingest_canonical
         # Not recommended for end users to do this.
         adapter._store_canonical(
