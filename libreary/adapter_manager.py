@@ -6,6 +6,7 @@ import hashlib
 import shutil
 from typing import List
 import sqlite3
+import logging
 
 from libreary.adapters.BaseAdapter import BaseAdapter
 from libreary.adapters.local import LocalAdapter
@@ -14,6 +15,7 @@ from libreary.adapters.drive import GoogleDriveAdapter
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
 from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored
 
+logger = logging.getLogger(__name__)
 
 class AdapterManager:
     """
@@ -72,17 +74,21 @@ class AdapterManager:
             }
         ```
         """
-        self.config = config
-        self.all_adapters = self.config["adapters"]
-        self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
-        self.conn = sqlite3.connect(self.metadata_db)
-        self.cursor = self.conn.cursor()
-        self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.ret_dir = config["options"]["output_dir"]
-        self.config_dir = config["options"]["config_dir"]
-        self.levels = {}
-        self.adapters = {}
-        self.canonical_adapter = self.config["canonical_adapter"]
+        try:
+            self.config = config
+            self.all_adapters = self.config["adapters"]
+            self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
+            self.conn = sqlite3.connect(self.metadata_db)
+            self.cursor = self.conn.cursor()
+            self.dropbox_dir = config["options"]["dropbox_dir"]
+            self.ret_dir = config["options"]["output_dir"]
+            self.config_dir = config["options"]["config_dir"]
+            self.levels = {}
+            self.adapters = {}
+            self.canonical_adapter = self.config["canonical_adapter"]
+            logger.debug("Adapter Manager Configuration Valid")
+        except KeyError:
+            logger.error("Adapter Manager Configuration Invalid")
         # Run this any time you expect levels and adapters to change
         # For most use cases, this will only be on construction
         # This method should be run externally, any time a new level is added
@@ -119,6 +125,7 @@ class AdapterManager:
                                 "name": level[1],
                                 "frequency": level[2],
                                 "adapters": json.loads(level[3])}
+            logger.debug(f"Fould level {level[1]} with adapters {json.loads(level[3])}")
         return levels
 
     def _set_levels(self) -> None:
@@ -152,6 +159,8 @@ class AdapterManager:
             for adapter in level["adapters"]:
                 adapters[adapter["id"]] = self.create_adapter(
                     adapter["type"], adapter["id"], self.config_dir)
+                logger.debug(f"Created adapter {adapter['id']} of type {adapter['type']}")
+        logger.debug(f"Summary of all adapters: {adapters}")
         return adapters
 
     def _set_adapters(self) -> None:
@@ -186,6 +195,7 @@ class AdapterManager:
         adapter = self.create_adapter(
             adapter_type, adapter_id, self.config_dir)
         self.adapters[adapter_id] = adapter
+        logger.debug(f"Manually added adapter {adapter_id} of type {adapter_type}")
         return adapter
 
     def verify_adapter(self, adapter_id: str) -> bool:
@@ -225,6 +235,7 @@ class AdapterManager:
 
         r_val = False
         if new_checksum == real_checksum:
+            logger.debug(f"Verified Adapter {adapter_id}")
             r_val = True
 
         adapter._delete_canonical(r_id)
@@ -322,6 +333,7 @@ class AdapterManager:
 
         # If the file isn't where we want it, put it there
         if not file_there:
+            logger.debug(f"Could not find object {r_id} in Dropbox Directory. Moving it")
             # retrieve moves it to the retrieval dir
             current_path = self.adapters[self.canonical_adapter].retrieve(r_id)
             # so we move it to the dropbox_dir
@@ -331,9 +343,11 @@ class AdapterManager:
         for level in levels:
             adapters = self.get_adapters_by_level(level)
             for adapter in adapters:
+                logger.debug(f"Storing object {r_id} to adapter {adapter_id}")
                 adapter.store(r_id)
 
         if delete_after_send:
+            logger.debug(f"Deleting object {r_id} after send")
             os.remove(expected_location)
 
     def get_adapters_by_level(self, level: str) -> List[BaseAdapter]:
@@ -364,6 +378,7 @@ class AdapterManager:
         for level in levels:
             adapters = self.get_adapters_by_level(level)
             for adapter in adapters:
+                logger.debug(f"Deleting object {r_id} from {adapter}")
                 adapter.delete(r_id)
 
     def change_resource_level(self, r_id: str, new_levels: List[str]) -> None:
@@ -375,6 +390,7 @@ class AdapterManager:
         :param new_levels: list of names of levels to assign to the resource
         """
 
+        logger.debug(f"Changing object {r_id} to new levels: {new_levels}")
         # Because d_r_f_a doesn't delete canonical copy, we can simply use
         # it to reset
         self.delete_resource_from_adapters(r_id)
@@ -430,7 +446,7 @@ class AdapterManager:
             new_loc = self.adapters[self.canonical_adapter].retrieve(r_id)
             return new_loc
         except ChecksumMismatchException:
-            print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
+            logger.error("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
             self.restore_canonical_copy(r_id)
 
         for adapter in self.adapters.values():
@@ -438,11 +454,11 @@ class AdapterManager:
                 new_loc = adapter.retrieve(r_id)
                 return new_loc
             except ChecksumMismatchException:
-                print("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
+                logger.error("Canonical Recovery Failed. Attempting to Restore Canonical Copy")
                 self.restore_from_canonical_copy(adapter.adapter_id, r_id)
 
     def check_single_resource_single_adapter(
-            self, r_id: str, adapter_id: str) -> bool:
+            self, r_id: str, adapter_type:str, adapter_id: str) -> bool:
         """
         Ensure that a copy of an object matches its canonical checksum.
         This method trusts that the metadata db has the proper canonical checksum.
@@ -463,21 +479,24 @@ class AdapterManager:
                 found = True
                 if copy[2] != canonical_checksum:
                     try:
+                        logger.debug(f"Trying to restore resource {r_id} from canonical copy")
                         self.restore_from_canonical_copy(
                             self, adapter_id, r_id)
                     except RestorationFailedException:
-                        print(
+                        logger.error(
                             "Restoration of {} in {} failed".format(
                                 r_id, adapter_id))
                         found = False
             # didn't find the copy from this adapter
         if not found:
+            logger.debug(f"Could not find resource {r_id} in adapter {adapter_id}")
             try:
                 a = AdapterManager.create_adapter(
-                    self.adapter_type, adapter_id)
+                    adapter_type, adapter_id)
                 a.store(r_id)
                 found = True
             except AdapterCreationFailedException:
+                logger.error("Could not create adapter {adapter_id}")
                 found = False
         return found
 
@@ -509,9 +528,10 @@ class AdapterManager:
 
         if new_checksum != recorded_checksum:
             try:
+                logger.debug(f"Restoring copy of {r_id} in {adapter_id}")
                 self.restore_from_canonical_copy(self, adapter_id, r_id)
             except RestorationFailedException:
-                print(
+                logger.error(
                     "Restoration of {} in {} failed".format(
                         r_id, adapter_id))
                 r_val = False
@@ -562,6 +582,7 @@ class AdapterManager:
                 adapters = self.get_adapters_by_level(level)
                 for adapter in adapters:
                     try:
+                        logger.debug(f"Trying to restore copy of {r_id} from adapter {adapter}")
                         current_location = adapter.retrieve(r_id)
                         raise AdapterRestored
                     except ResourceNotIngestedException:
@@ -570,6 +591,8 @@ class AdapterManager:
                         continue
                     except NoCopyExistsException:
                         continue
+                logger.error(f"Failed to restore copy of {r_id}")
+                return
         except AdapterRestored:
             self.adapters[self.canonical_adapter].store_canonical(
                 current_location, r_id, real_checksum, filename)
@@ -583,6 +606,7 @@ class AdapterManager:
         :param adapter_id - the ID of the adapter with the broken copy
         :param r_id - The resource UUID of the resource we've detected an issue with
         """
+        logger.debug(f"Restoring object {r_id} in adapter {adapter_id} from canonical copy.")
         self.adapters[adapter_id].delete(r_id)
         self.adapters[adapter_id].store(r_id)
 
@@ -610,6 +634,7 @@ class AdapterManager:
                 "select * from copies where resource_id=? and adapter_identifier=? limit 1",
                 (r_id, adapter_id_2)).fetchall()[0]
         except IndexError:
+            logger.error(f"No copy of object {r_id} exists.")
             raise NoCopyExistsException
 
         if not deep:
