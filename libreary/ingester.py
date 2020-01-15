@@ -51,6 +51,7 @@ class Ingester:
             logger.debug("Ingester configuration valid, creating Ingester.")
         except KeyError:
             logger.error("Ingester Configuration Invalid")
+            raise KeyError
 
     def ingest(self, current_file_path: str, levels: List[str],
                description: str, delete_after_store: bool = False) -> str:

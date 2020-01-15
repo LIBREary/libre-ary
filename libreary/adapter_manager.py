@@ -92,6 +92,7 @@ class AdapterManager:
                 "Adapter Manager Configuration Valid, creating Adapter Manager")
         except KeyError:
             logger.error("Adapter Manager Configuration Invalid")
+            raise KeyError
         # Run this any time you expect levels and adapters to change
         # For most use cases, this will only be on construction
         # This method should be run externally, any time a new level is added

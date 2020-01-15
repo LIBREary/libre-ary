@@ -90,7 +90,7 @@ class Libreary:
             logger.debug("LIBREary configuration valid. Proceeding.")
         except KeyError:
             logger.error("Invalid LIBREary config. Exiting.")
-            exit(1)
+            raise KeyError
 
     def run_check(deep: bool = False) -> List[str]:
         """
