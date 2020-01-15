@@ -3,7 +3,7 @@ import os
 import sqlite3
 import hashlib
 from typing import List
-
+import logging
 
 try:
     import boto3
@@ -16,6 +16,8 @@ else:
 
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
 from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 class S3Adapter:
@@ -55,26 +57,32 @@ class S3Adapter:
         }
         """
         self.config = config
+        try:
+            self.metadata_db = os.path.realpath(
+                config['metadata'].get("db_file"))
+            self.adapter_id = config["adapter"]["adapter_identifier"]
+            self.conn = sqlite3.connect(self.metadata_db)
+            self.cursor = self.conn.cursor()
+            self.adapter_type = "S3Adapter"
+            self.dropbox_dir = config["options"]["dropbox_dir"]
+            self.ret_dir = config["options"]["output_dir"]
 
-        self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
-        self.adapter_id = config["adapter"]["adapter_identifier"]
-        self.conn = sqlite3.connect(self.metadata_db)
-        self.cursor = self.conn.cursor()
-        self.adapter_type = "S3Adapter"
-        self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.ret_dir = config["options"]["output_dir"]
+            if not _boto_enabled:
+                raise OptionalModuleMissingException(
+                    ['boto3'], "S3 adapter requires the boto3 module.")
 
-        if not _boto_enabled:
-            raise OptionalModuleMissingException(
-                ['boto3'], "S3 adapter requires the boto3 module.")
+            self.profile = self.config["adapter"].get("profile")
+            self.key_file = self.config["adapter"].get("key_file")
+            self.bucket_name = self.config["adapter"].get("bucket_name")
+            self.region = self.config["adapter"].get("region", "us-west-2")
 
-        self.profile = self.config["adapter"].get("profile")
-        self.key_file = self.config["adapter"].get("key_file")
-        self.bucket_name = self.config["adapter"].get("bucket_name")
-        self.region = self.config["adapter"].get("region", "us-west-2")
+            self.env_specified = os.getenv("AWS_ACCESS_KEY_ID") is not None and os.getenv(
+                "AWS_SECRET_ACCESS_KEY") is not None
+            logger.debug("Creating S3 Adapter")
+        except KeyError:
+            logger.error("Invalid configuration for S3 Adapter")
+            raise KeyError
 
-        self.env_specified = os.getenv("AWS_ACCESS_KEY_ID") is not None and os.getenv(
-            "AWS_SECRET_ACCESS_KEY") is not None
         if self.profile is None and self.key_file is None and not self.env_specified:
             raise ConfigurationError("Must specify either profile', 'key_file', or "
                                      "'AWS_ACCESS_KEY_ID' and 'AWS_SECRET_ACCESS_KEY' environment variables.")
@@ -82,6 +90,7 @@ class S3Adapter:
         try:
             self.initialize_boto_client()
         except Exception as e:
+            logger.error(f"Could not create AWS session")
             raise e
 
         self._create_bucket_if_nonexistent()
@@ -122,11 +131,11 @@ class S3Adapter:
                 with open(credfile, 'r') as f:
                     creds = json.load(f)
             except json.JSONDecodeError as e:
-
+                logger.error(f"Could not create AWS session")
                 raise e
 
             except Exception as e:
-
+                logger.error(f"Could not create AWS session")
                 raise e
 
             session = boto3.session.Session(region_name=self.region, **creds)
@@ -136,22 +145,22 @@ class S3Adapter:
             )
         else:
             session = boto3.session.Session(region_name=self.region)
-
+        logger.error(f"Created AWS session")
         return session
 
     def _create_bucket_if_nonexistent(self) -> None:
         """
         Create the S3 bucket we will need if it doesn't already exist
         """
-        print(self.region)
         location = {'LocationConstraint': self.region}
         response = self.client.list_buckets()
         buckets = [bucket['Name'] for bucket in response['Buckets']]
-        print(buckets)
 
         if self.bucket_name in buckets:
+            logger.debug(f"Found existing bucket. ID: {self.bucket_name}")
             return
 
+        logger.debug(f"No existing bucket. Creating: {self.bucket_name}")
         self.s3.create_bucket(Bucket=self.bucket_name,
                               CreateBucketConfiguration=location)
 
@@ -164,6 +173,7 @@ class S3Adapter:
 
         :param r_id - the resource to store's UUID
         """
+        logger.debug(f"Storing object {r_id} to adapter {self.adapter_id}")
 
         file_metadata = self.load_metadata(r_id)[0]
         checksum = file_metadata[4]
@@ -177,7 +187,8 @@ class S3Adapter:
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
                 r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
-            print("Other copies from this adapter exist")
+            logger.debug(
+                f"Other copies of {r_id} from {self.adapter_id} exist")
             return
 
         if sha1Hashed == checksum:
@@ -187,8 +198,8 @@ class S3Adapter:
                 current_location,
                 locator)
         else:
-            print("Checksum Mismatch")
-            raise Exception
+            logger.error(f"Checksum Mismatch on {r_id} from {self.adapter_id}")
+            raise ChecksumMismatchException
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
@@ -210,6 +221,8 @@ class S3Adapter:
             :param filename - filename of resource you're storing
 
         """
+        logger.debug(
+            f"Storing canonical object {r_id} to adapter {self.adapter_id}")
         current_location = current_path
 
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
@@ -221,13 +234,14 @@ class S3Adapter:
             str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
-            print("Other canonical copies from this adapter exist")
+            logger.error(
+                f"Other canonical copies of {r_id} from {self.adapter_id} exist")
             raise StorageFailedException
 
         if sha1Hashed == checksum:
             self.s3.Bucket(self.bucket_name).upload_file(current_path, locator)
         else:
-            print("Checksum Mismatch")
+            logger.error(f"Checksum Mismatch on {r_id} from {self.adapter_id}")
             raise ChecksumMismatchException
 
         self.cursor.execute(
@@ -253,6 +267,7 @@ class S3Adapter:
         try:
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
+            logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
 
         copy_info = self.cursor.execute(
@@ -270,7 +285,8 @@ class S3Adapter:
                 copy_locator,
                 new_location)
         else:
-            print("Checksum Mismatch")
+            logger.error(f"Checksum Mismatch on object {r_id}")
+            raise ChecksumMismatchException
 
         return new_location
 
@@ -291,6 +307,7 @@ class S3Adapter:
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -309,6 +326,8 @@ class S3Adapter:
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(
+            f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -333,12 +352,15 @@ class S3Adapter:
         :param delete_after_download - True if the file should be downloaded after the
             checksum is calculated
         """
+        logger.debug(
+            f"Getting actual checksum of object {r_id} from adapter {self.adapter_id}")
         new_path = self.retrieve(r_id)
 
         sha1Hash = hashlib.sha1(open(new_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
         if delete_after_download:
+            logger.debug(f"Delete after download enabled on {self.adapter_id}")
             os.remove(new_path)
 
         return sha1Hashed

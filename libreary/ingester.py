@@ -5,8 +5,12 @@ import hashlib
 import uuid
 import json
 from typing import List
+import logging
 
 from libreary.adapter_manager import AdapterManager
+from libreary.exceptions import ChecksumMismatchException
+
+logger = logging.getLogger(__name__)
 
 
 class Ingester:
@@ -35,13 +39,19 @@ class Ingester:
             }
         ```
         """
-        self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
-        self.conn = sqlite3.connect(self.metadata_db)
-        self.cursor = self.conn.cursor()
-        self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.canonical_adapter_id = config["canonical_adapter"]
-        self.canonical_adapter_type = config["canonical_adapter"]
-        self.config_dir = config["options"]["config_dir"]
+        try:
+            self.metadata_db = os.path.realpath(
+                config['metadata'].get("db_file"))
+            self.conn = sqlite3.connect(self.metadata_db)
+            self.cursor = self.conn.cursor()
+            self.dropbox_dir = config["options"]["dropbox_dir"]
+            self.canonical_adapter_id = config["canonical_adapter"]
+            self.canonical_adapter_type = config["canonical_adapter"]
+            self.config_dir = config["options"]["config_dir"]
+            logger.debug("Ingester configuration valid, creating Ingester.")
+        except KeyError:
+            logger.error("Ingester Configuration Invalid")
+            raise KeyError
 
     def ingest(self, current_file_path: str, levels: List[str],
                description: str, delete_after_store: bool = False) -> str:
@@ -61,6 +71,8 @@ class Ingester:
             self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
 
         obj_uuid = str(uuid.uuid4())
+
+        logger.debug(f"Ingesting resource {obj_uuid} with filename {filename}")
 
         canonical_adapter_locator = canonical_adapter._store_canonical(
             current_file_path, obj_uuid, checksum, filename)
@@ -109,6 +121,7 @@ class Ingester:
 
         :param r_id - the UUID of the resouce you're deleting
         """
+
         resource_info = self.cursor.execute(
             "select * from resources where id=?", (r_id,))
         canonical_checksum = resource_info[4]
@@ -118,9 +131,12 @@ class Ingester:
         checksum = canonical_adapter.get_actual_checksum(r_id)
 
         if checksum == canonical_checksum:
+            logger.debug(f"Deleting canonical copy of object {r_id}")
             canonical_adapter._delete_canonical(r_id)
         else:
-            print("Checksum Mismatch")
+            logger.error("Checksum Mismatch")
+            raise ChecksumMismatchException
 
+        logger.debug(f"Deleting object {r_id} from resources database")
         self.cursor.execute("delete from resources where id=?", (r_id,))
         self.conn.commit()

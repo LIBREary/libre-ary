@@ -2,10 +2,12 @@ import json
 import os
 import sqlite3
 from typing import List
-
+import logging
 
 from libreary.adapter_manager import AdapterManager
 from libreary.ingester import Ingester
+
+logger = logging.getLogger(__name__)
 
 
 class Libreary:
@@ -71,19 +73,24 @@ class Libreary:
         self.config_path = "{}/config.json".format(self.config_dir)
         self.config = json.load(open(self.config_path))
 
-        # Metadata stuff
-        self.metadata_db = os.path.realpath(
-            self.config['metadata'].get("db_file"))
-        self.conn = sqlite3.connect(self.metadata_db)
-        self.cursor = self.conn.cursor()
+        try:
+            # Metadata stuff
+            self.metadata_db = os.path.realpath(
+                self.config['metadata'].get("db_file"))
+            self.conn = sqlite3.connect(self.metadata_db)
+            self.cursor = self.conn.cursor()
 
-        # Directories we care about
-        self.dropbox_dir = self.config["options"]["dropbox_dir"]
-        self.ret_dir = self.config["options"]["output_dir"]
+            # Directories we care about
+            self.dropbox_dir = self.config["options"]["dropbox_dir"]
+            self.ret_dir = self.config["options"]["output_dir"]
 
-        # Objects we need
-        self.adapter_man = AdapterManager(self.config)
-        self.ingester = Ingester(self.config)
+            # Objects we need
+            self.adapter_man = AdapterManager(self.config)
+            self.ingester = Ingester(self.config)
+            logger.debug("LIBREary configuration valid. Proceeding.")
+        except KeyError:
+            logger.error("Invalid LIBREary config. Exiting.")
+            raise KeyError
 
     def run_check(deep: bool = False) -> List[str]:
         """
@@ -106,7 +113,7 @@ class Libreary:
         of each copy of each object, while a shallow one will trust that the checksum in the metadata
         database matches that of the actual object.
         """
-        pass
+        logger.debug(f"Running check of all objects in LIBREary. Deep: {deep}")
 
     def ingest(self, current_file_path: str, levels: List[str],
                description: str, delete_after_store: bool = False) -> str:
@@ -135,6 +142,8 @@ class Libreary:
             delete_after_store=False)
         self.adapter_man.send_resource_to_adapters(
             obj_id, delete_after_send=delete_after_store)
+        logger.debug(
+            f"Ingesting object {obj_id} to LIBREary. Description: {description}")
         return obj_id
 
     def retrieve(self, r_id: str) -> str:
@@ -150,6 +159,7 @@ class Libreary:
 
         Returns a path to the retireved object.
         """
+        logger.debug(f"Retrieving object {r_id}")
         new_location = self.adapter_man.retrieve_by_preference(r_id)
         return new_location
 
@@ -162,6 +172,7 @@ class Libreary:
 
         Be careful with this function, as there is no undo option.
         """
+        logger.debug(f"Deleting object {r_id}")
         self.adapter_man.delete_resource_from_adapters(r_id)
         self.ingester.delete_resource((r_id))
 
@@ -173,7 +184,7 @@ class Libreary:
         :param updated_path - path to the contents of the updated object.
 
         """
-        pass
+        logger.debug(f"Updating object {r_id}")
 
     def search(self, search_term: str) -> List[str]:
         """
@@ -207,7 +218,7 @@ class Libreary:
 
         :param r_id - the resource ID of the object you'd like to check
         """
-        pass
+        logger.debug(f"Checking object {r_id}")
 
     def add_level(self, name: str, frequency: int,
                   adapters: List[dict], copies=1) -> None:
@@ -232,6 +243,7 @@ class Libreary:
             ```
         :param copies - copies to store for each adapter. Currently, only 1 is supported
         """
+        logger.debug(f"Adding new level: {name}")
         str_adapters = json.dumps(adapters)
         self.cursor.execute(
             "insert into levels values (?, ?, ?, ?)",

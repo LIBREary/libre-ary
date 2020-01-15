@@ -4,9 +4,12 @@ from shutil import copyfile
 import hashlib
 import json
 from typing import List
+import logging
 
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
 from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException
+
+logger = logging.getLogger(__name__)
 
 
 class LocalAdapter():
@@ -52,14 +55,20 @@ class LocalAdapter():
         ```
 
         """
-        self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
-        self.adapter_id = config["adapter"]["adapter_identifier"]
-        self.conn = sqlite3.connect(self.metadata_db)
-        self.cursor = self.conn.cursor()
-        self.storage_dir = config["adapter"]["storage_dir"]
-        self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.adapter_type = "LocalAdapter"
-        self.ret_dir = config["options"]["output_dir"]
+        try:
+            self.metadata_db = os.path.realpath(
+                config['metadata'].get("db_file"))
+            self.adapter_id = config["adapter"]["adapter_identifier"]
+            self.conn = sqlite3.connect(self.metadata_db)
+            self.cursor = self.conn.cursor()
+            self.storage_dir = config["adapter"]["storage_dir"]
+            self.dropbox_dir = config["options"]["dropbox_dir"]
+            self.adapter_type = "LocalAdapter"
+            self.ret_dir = config["options"]["output_dir"]
+            logger.debug("Creating Local Adapter")
+        except KeyError:
+            logger.error("Invalid configuration for Local Adapter")
+            raise KeyError
 
     def store(self, r_id: str) -> str:
         """
@@ -70,6 +79,7 @@ class LocalAdapter():
 
         :param r_id - the resource to store's UUID
         """
+        logger.debug(f"Storing object {r_id} to adapter {self.adapter_id}")
         file_metadata = self.load_metadata(r_id)[0]
         checksum = file_metadata[4]
         name = file_metadata[3]
@@ -91,14 +101,15 @@ class LocalAdapter():
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
                 r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
-            print("Other copies from this adapter exist")
+            logger.debug(
+                f"Other copies of {r_id} from {self.adapter_id} exist")
             return
 
         if sha1Hashed == checksum:
             copyfile(current_location, new_location)
         else:
-            print("Checksum Mismatch")
-            raise Exception
+            logger.error(f"Checksum Mismatch on object {r_id}")
+            raise ChecksumMismatchException
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
@@ -118,15 +129,20 @@ class LocalAdapter():
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(
+            f"Retrieving object {r_id} from adapter {self.adapter_id}")
         try:
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
+            logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
         try:
             copy_info = self.cursor.execute(
                 "select * from copies where resource_id=? and adapter_identifier=? limit 1",
                 (r_id, self.adapter_id)).fetchall()[0]
         except IndexError:
+            logger.error(
+                f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")
             raise NoCopyExistsException
         expected_hash = copy_info[4]
         copy_path = copy_info[3]
@@ -137,7 +153,8 @@ class LocalAdapter():
         if real_hash == expected_hash:
             copyfile(copy_path, new_location)
         else:
-            print("Checksum Mismatch")
+            logger.error(f"Checksum Mismatch on object {r_id}")
+            raise ChecksumMismatchException
 
         return new_location
 
@@ -166,6 +183,8 @@ class LocalAdapter():
             :param filename - filename of resource you're storing
 
         """
+        logger.debug(
+            f"Storing canonical copy of object {r_id} to {self.adapter_id}")
         current_location = current_path
         new_location = os.path.expanduser(
             "{}/{}_canonical".format(self.storage_dir, filename))
@@ -184,15 +203,15 @@ class LocalAdapter():
             str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
-            print("Other canonical copies from this adapter exist")
+            logger.error(
+                f"Other canonical copies of {r_id} from {self.adapter_id} exist")
             raise StorageFailedException
 
         if sha1Hashed == checksum:
             copyfile(current_location, new_location)
         else:
-            print("Checksum Mismatch")
-            raise Exception
-            exit()
+            logger.error(f"Checksum Mismatch on object {r_id}")
+            raise ChecksumMismatchException
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
@@ -208,6 +227,7 @@ class LocalAdapter():
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()
@@ -233,6 +253,8 @@ class LocalAdapter():
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(
+            f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -268,6 +290,8 @@ class LocalAdapter():
 
         :param r_id - resource we want the checksum of
         """
+        logger.debug(
+            f"Getting actual checksum of object {r_id} from adapter {self.adapter_id}")
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? limit 1",
             (r_id, self.adapter_id)).fetchall()[0]

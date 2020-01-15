@@ -7,13 +7,13 @@ import pickle
 import io
 from pathlib import Path
 from typing import List
+import logging
 
 
 try:
     from googleapiclient.discovery import build
     from google_auth_oauthlib.flow import InstalledAppFlow
     from google.auth.transport.requests import Request
-    from pydrive.auth import GoogleAuth
     from apiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 except ImportError:
@@ -24,7 +24,10 @@ else:
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
 from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
 
+# Google Drive Scope
 SCOPES = ['https://www.googleapis.com/auth/drive']
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleDriveAdapter():
@@ -65,18 +68,26 @@ class GoogleDriveAdapter():
         "canonical":"(boolean) true if this is the canonical adapter"
         }
         """
-        self.metadata_db = os.path.realpath(config['metadata'].get("db_file"))
-        self.adapter_id = config["adapter"]["adapter_identifier"]
-        self.conn = sqlite3.connect(self.metadata_db)
-        self.cursor = self.conn.cursor()
-        self.token_file = config["adapter"]["token_file"]
-        self.dropbox_dir = config["options"]["dropbox_dir"]
-        self.folder_path = config["adapter"]["folder_path"]
-        self.adapter_type = "LocalAdapter"
-        self.ret_dir = config["options"]["output_dir"]
-        self.credentials_file = config["adapter"]["credentials_file"]
+        try:
+            self.metadata_db = os.path.realpath(
+                config['metadata'].get("db_file"))
+            self.adapter_id = config["adapter"]["adapter_identifier"]
+            self.conn = sqlite3.connect(self.metadata_db)
+            self.cursor = self.conn.cursor()
+            self.token_file = config["adapter"]["token_file"]
+            self.dropbox_dir = config["options"]["dropbox_dir"]
+            self.folder_path = config["adapter"]["folder_path"]
+            self.adapter_type = "GoogleDriveAdapter"
+            self.ret_dir = config["options"]["output_dir"]
+            self.credentials_file = config["adapter"]["credentials_file"]
+            logger.debug("Creating Drive Adapter")
+        except KeyError:
+            logger.error("Invalid configuration for Drive Adapter")
+            raise KeyError
 
         if not _google_enabled:
+            logger.error(
+                "Google Drive adapter requires the googleapiclient module.")
             raise OptionalModuleMissingException(
                 ['googleapiclient'], "Google Drive adapter requires the googleapiclient module.")
 
@@ -105,6 +116,7 @@ class GoogleDriveAdapter():
         # created automatically when the authorization flow completes for the first
         # time.
 
+        logger.debug("Attempting to acquire google credentials")
         # We save this in the self.config["token_file"] file
         if os.path.exists(self.token_file):
             with open(self.token_file, 'rb') as token:
@@ -112,30 +124,36 @@ class GoogleDriveAdapter():
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
+                logger.debug("Google credentials expired. Refreshing")
                 creds.refresh(Request())
             else:
+                logger.debug(
+                    "Google credentials not found. Acquiring new token")
                 flow = InstalledAppFlow.from_client_secrets_file(
                     self.credentials_file, SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
             with open(self.token_file, 'wb') as token:
+                logger.debug(f"Saving token to file {self.token_file}")
                 pickle.dump(creds, token)
 
+        logger.debug("Building GoogleDrive API service")
         self.service = build('drive', 'v3', credentials=creds)
 
     def _list_objects(self) -> None:
         """
         Sanity-check method for devs to use. Lists top 1000 items in drive
         """
+        logger.debug(f"Testing drive connection")
         results = self.service.files().list(
             pageSize=1000, fields="nextPageToken, files(id, name)").execute()
         items = results.get('files', [])
 
         if not items:
-            print('No files found.')
+            logger.info('No files found.')
         else:
             for item in items:
-                print(item)
+                logger.info(item)
 
     def _get_or_create_folder(self) -> str:
         """
@@ -152,9 +170,11 @@ class GoogleDriveAdapter():
             dir_id = file.get('id')
             page_token = response.get('nextPageToken', None)
             if page_token is None:
+                logger.debug(f"Found existing directory. ID: {dir_id}")
                 break
 
         if not dir_id:
+
             file_metadata = {
                 'name': self.folder_path,
                 'mimeType': 'application/vnd.google-apps.folder'
@@ -162,6 +182,8 @@ class GoogleDriveAdapter():
             file = self.service.files().create(body=file_metadata,
                                                fields='id').execute()
             dir_id = file.get('id')
+            logger.debug(
+                f"Could not find existing directory. 9io9o0Created new one - 9io9o0ID: {dir_id}")
 
         return dir_id
 
@@ -173,6 +195,7 @@ class GoogleDriveAdapter():
         :param filename - name of file to upload
         :param current_path - place where the file is right now
         """
+        logger.debug(f"Uploading file {filename} to Drive.")
         file_metadata = {'name': filename,
                          'parents': [self.dir_id]}
         media = MediaFileUpload(current_path,
@@ -192,6 +215,8 @@ class GoogleDriveAdapter():
 
         :param r_id - the resource to store's UUID
         """
+        logger.debug(f"Storing object {r_id} to adapter {self.adapter_id}")
+
         file_metadata = self.load_metadata(r_id)[0]
         checksum = file_metadata[4]
         name = file_metadata[3]
@@ -206,14 +231,15 @@ class GoogleDriveAdapter():
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
                 r_id, self.adapter_id)).fetchall()
         if len(other_copies) != 0:
-            print("Other copies from this adapter exist")
+            logger.debug(
+                f"Other copies of {r_id} from {self.adapter_id} exist")
             return
 
         if sha1Hashed == checksum:
             locator = self._upload_file(new_name, current_location)
         else:
-            print("Checksum Mismatch")
-            raise Exception
+            logger.error(f"Checksum Mismatch on {r_id} from {self.adapter_id}")
+            raise ChecksumMismatchException
 
         self.cursor.execute(
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
@@ -233,15 +259,20 @@ class GoogleDriveAdapter():
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(
+            f"Retrieving object {r_id} from adapter {self.adapter_id}")
         try:
             filename = self.load_metadata(r_id)[0][3]
         except IndexError:
+            logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
         try:
             copy_info = self.cursor.execute(
                 "select * from copies where resource_id=? and adapter_identifier=? limit 1",
                 (r_id, self.adapter_id)).fetchall()[0]
         except IndexError:
+            logger.error(
+                f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")
             raise NoCopyExistsException
         expected_hash = copy_info[4]
         copy_locator = copy_info[3]
@@ -252,6 +283,7 @@ class GoogleDriveAdapter():
         if real_hash == expected_hash:
             self._download_file(copy_locator, new_location)
         else:
+            logger.error(f"Checksum Mismatch on object {r_id}")
             raise ChecksumMismatchException
 
         return new_location
@@ -294,6 +326,8 @@ class GoogleDriveAdapter():
             :param checksum - checksum of resource
             :param filename - filename of resource you're storing
         """
+        logger.debug(
+            f"Storing canonical copy of object {r_id} to {self.adapter_id}")
 
         new_name = "{}_{}".format(r_id, filename)
 
@@ -304,12 +338,14 @@ class GoogleDriveAdapter():
             str(r_id), self.adapter_id)
         other_copies = self.cursor.execute(sql).fetchall()
         if len(other_copies) != 0:
-            print("Other canonical copies from this adapter exist")
+            logger.error(
+                f"Other canonical copies of {r_id} from {self.adapter_id} exist")
             raise StorageFailedException
 
         if sha1Hashed == checksum:
             locator = self._upload_file(new_name, current_path)
         else:
+            logger.error(f"Checksum Mismatch on object {r_id}")
             raise ChecksumMismatchException
 
         self.cursor.execute(
@@ -326,6 +362,8 @@ class GoogleDriveAdapter():
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
+
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()
@@ -350,6 +388,9 @@ class GoogleDriveAdapter():
 
         :param r_id - the resource to retrieve's UUID
         """
+        logger.debug(
+            f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
+
         copy_info = self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
             (r_id, self.adapter_id)).fetchall()[0]
@@ -383,12 +424,15 @@ class GoogleDriveAdapter():
         The :param deep trusts the tag we've given google drive on ingestion,
         if True, it will retrieve and recompute
         """
+        logger.debug(
+            f"Getting actual checksum of object {r_id} from adapter {self.adapter_id}")
         new_path = self.retrieve(r_id)
 
         sha1Hash = hashlib.sha1(open(new_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
         if delete_after_download:
+            logger.debug(f"Delete after download enabled on {self.adapter_id}")
             os.remove(new_path)
 
         return sha1Hashed
