@@ -88,7 +88,8 @@ class AdapterManager:
             self.levels = {}
             self.adapters = {}
             self.canonical_adapter = self.config["canonical_adapter"]
-            logger.debug("Adapter Manager Configuration Valid, creating Adapter Manager")
+            logger.debug(
+                "Adapter Manager Configuration Valid, creating Adapter Manager")
         except KeyError:
             logger.error("Adapter Manager Configuration Invalid")
         # Run this any time you expect levels and adapters to change
