@@ -1,7 +1,7 @@
 Where to start
 --------------
 
-We welcome contributions of any type (e.g., bug fixes, new features, reporting issues, documentation, etc).  If you're looking for a good place to get started you might like to peruse our current Git issues (those marked with [help wanted](https://github.com/benhg/libre-ary/labels/help%20wanted) are a good place to start).  
+We welcome contributions of any type (e.g., bug fixes, new features, reporting issues, documentation, etc).  If you're looking for a good place to get started you might like to peruse our current Git issues (those marked with [help wanted](https://github.com/LIBREary/libre-ary/labels/help%20wanted) are a good place to start).  
 
 Coding conventions
 ------------------
