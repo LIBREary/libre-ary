@@ -11,7 +11,7 @@ You can install LIBRE-ary two ways: from source, or from `pip`
 
 To install from source, first, obtain the repo:
 ```
-git clone https://github.com/benhg/libre-ary
+git clone https://github.com/LIBREary/libre-ary
 ```
 Navigate to the directory
 ```

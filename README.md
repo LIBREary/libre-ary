@@ -25,7 +25,7 @@ An example of the configuration can be found in the `libre-ary/config` directory
 
 LIBREary is a python package, and can be istalled using python3's setup tools. First, make sure you have python3 installed on your system. Then:
 
-`git clone https://github.com/benhg/libre-ary`
+`git clone https://github.com/LIBREary/libre-ary`
 
 `cd libre-ary`
 
@@ -36,7 +36,7 @@ LIBREary is now `pip` installable! Try `pip3 install libreary==0.0.1`!
 
 ## How do I interact with LIBRE-ary?
 
-Please see the [quickstart guide](https://github.com/benhg/libre-ary/blob/master/QUICKSTART.md) or [our docs](https://libre-ary.readthedocs.io) for usage information.
+Please see the [quickstart guide](https://github.com/LIBREary/libre-ary/blob/master/QUICKSTART.md) or [our docs](https://libre-ary.readthedocs.io) for usage information.
 
 ## How should I cite or use LIBREary?
 
