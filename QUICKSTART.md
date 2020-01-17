@@ -51,7 +51,7 @@ The `dropbox_dir` and `output_dir`  are both directories that LIBREary will plac
 
 I suggest putting all of these necessary directories within a single directory that you name something informative. 
 
-Next, get a blank copy of the medatada database. This can be found at <URL>. You should be able to download it by simply running the command `wget <URL>`. Save this within your main LIBREary directory. You shouldn't need to open it yourself, or at least not often. LIBREary should handle all of that itself. 
+Next, get a blank copy of the medatada database. This can be found at (https://github.com/LIBREary/libre-ary/blob/master/libreary/metadata/md_index.db?raw=true). You should be able to download it by simply running the command `wget https://github.com/LIBREary/libre-ary/blob/master/libreary/metadata/md_index.db?raw=true`. Save this within your main LIBREary directory. You shouldn't need to open it yourself, or at least not often. LIBREary should handle all of that itself. 
 
 Next, you're ready to write the config file. The config file should be named `<path/to/config/dir>/config.json`. It should be structured as follows:
 
