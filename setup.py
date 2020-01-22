@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 with open('libreary/version.py') as f:
     exec(f.read())
-    
+
 with open('requirements.txt') as f:
     install_requires = f.readlines()
 

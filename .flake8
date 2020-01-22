@@ -13,3 +13,4 @@
 # F403: Star imports for exceptions currently acceptable. WIll remove this soon.
 ignore = E124, E126, F401, F403, E402, E129, W504
 max-line-length = 160
+exclude = setup.py
