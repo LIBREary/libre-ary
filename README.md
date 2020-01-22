@@ -1,4 +1,4 @@
-# LIBREary [![Documentation Status](https://readthedocs.org/projects/libre-ary/badge/?version=master)](https://libre-ary.readthedocs.io/en/master/?badge=master)
+# LIBREary [![Documentation Status](https://readthedocs.org/projects/libre-ary/badge/?version=master)](https://libre-ary.readthedocs.io/en/master/?badge=master) [![Build Status](https://travis-ci.com/LIBREary/libre-ary.svg?branch=master)](https://travis-ci.com/LIBREary/libre-ary)
 
 
 ## What is this?
