@@ -42,6 +42,7 @@ class SQLite3MetadataManager(object):
                 config.get("db_file"))
             self.conn = sqlite3.connect(self.metadata_db)
             self.cursor = self.conn.cursor()
+            self.type = self.config.get("manager_type")
             logger.debug(
                 "Metadata Manager Configuration Valid. Creating Metadata Manager")
         except KeyError:
@@ -116,12 +117,17 @@ class SQLite3MetadataManager(object):
 
     def get_resource_info(self, r_id: str) -> List[str]:
         """
-        Get all of the resource metadata for a resource
+        Get all of the resource metadata for a resource That summary includes:
+
+        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
 
         This returns metadata that's kept in the `resources` table, not the `copies` table
         """
         return self.cursor.execute(
-            "select * from resources where id=?", (r_id,))
+            "select * from resources where uuid=?", (r_id,))
 
     def delete_resource(self, r_id: str) -> None:
         """
@@ -131,3 +137,67 @@ class SQLite3MetadataManager(object):
         """
         self.cursor.execute("delete from resources where id=?", (r_id,))
         self.conn.commit()
+
+    def minimal_test_ingest(self, locator: str, real_checksum: str, r_id: str):
+        """
+        Minimally ingest a resource for adapter testing
+
+        Adapters depend on certain information in the `resources` table. 
+
+        In order for adapter manager to test adapters, it needs to have minimally ingested them.
+        This testing has predefined levels, filenames, and descriptions.
+
+        In general, I don't advise running this method yourself. Allow the adapter manager to do it.
+
+        :param locator - locator of the copy you're testing
+        :param real_checksum - object checksum
+        :param r_id - r_id of test resource
+        """
+        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)",
+                            (None, locator, "low,", "libreary_test_file.txt", real_checksum, r_id, "A resource for testing LIBREary adapters with"))
+        self.conn.commit()
+
+    def get_levels(self):
+        """
+        Return all configured levels
+        """
+        return self.cursor.execute("select * from levels").fetchall()
+
+    def update_resource_levels(self, r_id: str, new_levels: List[str]):
+        """
+        Change a resource's levels
+
+        :param r_id - resource id of resource to update
+        :param new_levels - list of names of new levels
+        """
+        sql = "update resources set levels = '?' where uuid=?"
+        self.cursor.execute(sql, (r_id, ",".join([l for l in new_levels])))
+        self.conn.commit()
+
+    def summarize_copies(self, r_id: str) -> List[List[str]]:
+        """
+        Get a summary of all copies of a single resource. That summary includes:
+
+        `copy_id`, `resource_id`, `adapter_identifier`, `locator`, `checksum`, `adapter type`, `canonical (bool)`
+        for each copy
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
+
+        :param r_id - UUID of resource you'd like to learn about
+        """
+        sql = "select * from copies where resource_id = '{}'".format(r_id)
+        return self.cursor.execute(sql).fetchall()
+
+    def get_canonical_copy_metadata(self, r_id: str) -> List[List[str]]:
+        """
+        Get a summary of the canonical copy of an object's medatada. That summary includes:
+        `copy_id`, `resource_id`, `adapter_identifier`, `locator`, `checksum`, `adapter type`, `canonical (bool)`
+
+        :param r_id - UUID of resource you'd like to learn about
+        """
+        sql = "select * from copies where resource_id = '{}' and canonical=1".format(
+            r_id)
+        return self.cursor.execute(sql).fetchall()
+
+
