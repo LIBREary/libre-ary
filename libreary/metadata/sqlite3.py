@@ -74,6 +74,7 @@ class SQLite3MetadataManager(object):
             ```
         :param copies - copies to store for each adapter. Currently, only 1 is supported
         """
+        logger.debug(f"Adding level {name}")
         str_adapters = json.dumps(adapters)
         self.cursor.execute(
             "insert into levels values (?, ?, ?, ?)",
@@ -81,4 +82,52 @@ class SQLite3MetadataManager(object):
              frequency,
              str_adapters,
              copies))
+        self.conn.commit()
+
+
+    def ingest_to_db(self, canonical_adapter_locator: str, levels: List[str], filename: str, checksum: str, obj_uuid: str, description: str) -> None:
+        """
+        Ingest an object's metadata to the metadata database.
+
+        :param canonical_adapter_locator - locator from the canonical adapter. 
+               usually something like a file path or object ID
+        :param levels - list of strings, each the name of a level the object should be stored at
+        :param filename - the filename of the object to be ingested
+        :param checksum - the checksum of object to be ingested
+        :param UUID - the UUID to be tagged with the object
+        :param description - a friendly, searchable description of the object
+        """
+        logger.debug(f"Ingesting object {obj_uuid} with name {filename}")
+        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)",
+                            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid, description))
+
+        self.conn.commit()
+
+    def list_resources(self) -> List[List[str]]:
+        """
+        Return a list of summaries of each resource. This summary includes:
+
+        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
+
+        This method trusts the metadata database. There should be a separate method to
+        verify the metadata db so that we know we can trust this info
+        """
+        return self.cursor.execute("select * from resources").fetchall()
+
+    def get_resource_info(self, r_id: str) -> List[str]:
+        """
+        Get all of the resource metadata for a resource
+
+        This returns metadata that's kept in the `resources` table, not the `copies` table
+        """
+        return self.cursor.execute(
+            "select * from resources where id=?", (r_id,))
+
+    def delete_resource(self, r_id: str) -> None:
+        """
+        Delete a resource's metadata from the `resources` table
+
+        :param r_id - the resource's uuid
+        """
+        self.cursor.execute("delete from resources where id=?", (r_id,))
         self.conn.commit()
