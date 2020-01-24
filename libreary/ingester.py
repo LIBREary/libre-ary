@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class Ingester:
 
-    def __init__(self, config: dict, metadata_man: object=None):
+    def __init__(self, config: dict, metadata_man: object = None):
         """
         Constructor for the Ingester object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
@@ -48,9 +48,9 @@ class Ingester:
             self.config_dir = config["options"]["config_dir"]
 
             self.metadata_man = metadata_man
-            if self.metadata_man == None:
+            if self.metadata_man is None:
                 raise KeyError
-            
+
             logger.debug("Ingester configuration valid, creating Ingester.")
         except KeyError as e:
             logger.error("Ingester Configuration Invalid")
@@ -83,7 +83,13 @@ class Ingester:
         levels = ",".join([str(l) for l in levels])
 
         # Ingest to db
-        self.metadata_man.ingest_to_db(canonical_adapter_locator, levels, filename, checksum, obj_uuid, description)
+        self.metadata_man.ingest_to_db(
+            canonical_adapter_locator,
+            levels,
+            filename,
+            checksum,
+            obj_uuid,
+            description)
 
         # If file is not in dropbox, copy it there
 

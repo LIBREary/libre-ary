@@ -51,7 +51,7 @@ class AdapterManager:
     - verify_copy (check if a copy matches the canonicl copy)
     """
 
-    def __init__(self, config: dict, metadata_man: object=None):
+    def __init__(self, config: dict, metadata_man: object = None):
         """
         Constructor for the AdapterManager object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
@@ -85,7 +85,7 @@ class AdapterManager:
             self.adapters = {}
             self.canonical_adapter = self.config["canonical_adapter"]
             self.metadata_man = metadata_man
-            if self.metadata_man == None:
+            if self.metadata_man is None:
                 raise KeyError
             logger.debug(
                 "Adapter Manager Configuration Valid, creating Adapter Manager")

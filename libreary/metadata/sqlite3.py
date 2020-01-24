@@ -85,12 +85,12 @@ class SQLite3MetadataManager(object):
              copies))
         self.conn.commit()
 
-
-    def ingest_to_db(self, canonical_adapter_locator: str, levels: List[str], filename: str, checksum: str, obj_uuid: str, description: str) -> None:
+    def ingest_to_db(self, canonical_adapter_locator: str,
+                     levels: List[str], filename: str, checksum: str, obj_uuid: str, description: str) -> None:
         """
         Ingest an object's metadata to the metadata database.
 
-        :param canonical_adapter_locator - locator from the canonical adapter. 
+        :param canonical_adapter_locator - locator from the canonical adapter.
                usually something like a file path or object ID
         :param levels - list of strings, each the name of a level the object should be stored at
         :param filename - the filename of the object to be ingested
@@ -142,7 +142,7 @@ class SQLite3MetadataManager(object):
         """
         Minimally ingest a resource for adapter testing
 
-        Adapters depend on certain information in the `resources` table. 
+        Adapters depend on certain information in the `resources` table.
 
         In order for adapter manager to test adapters, it needs to have minimally ingested them.
         This testing has predefined levels, filenames, and descriptions.
@@ -199,5 +199,3 @@ class SQLite3MetadataManager(object):
         sql = "select * from copies where resource_id = '{}' and canonical=1".format(
             r_id)
         return self.cursor.execute(sql).fetchall()
-
-

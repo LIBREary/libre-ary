@@ -15,7 +15,6 @@ metadata_manager_translate_table = {
 }
 
 
-
 class Libreary:
     """
     This is the user-facing class for LIBRE-ary. Users of LIBRE-ary should only interact
@@ -85,9 +84,12 @@ class Libreary:
             self.ret_dir = self.config["options"]["output_dir"]
 
             # Objects we need
-            self.metadata_man = metadata_manager_translate_table[self.config["metadata"]["manager_type"]](self.config["metadata"])
-            self.adapter_man = AdapterManager(self.config, metadata_man=self.metadata_man)
-            self.ingester = Ingester(self.config, metadata_man=self.metadata_man)
+            self.metadata_man = metadata_manager_translate_table[self.config["metadata"]["manager_type"]](
+                self.config["metadata"])
+            self.adapter_man = AdapterManager(
+                self.config, metadata_man=self.metadata_man)
+            self.ingester = Ingester(
+                self.config, metadata_man=self.metadata_man)
             logger.debug("LIBREary configuration valid. Proceeding.")
         except KeyError:
             logger.error("Invalid LIBREary config. Exiting.")
