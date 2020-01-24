@@ -11,10 +11,11 @@ from libreary.exceptions import ChecksumMismatchException
 
 logger = logging.getLogger(__name__)
 
+
 class SQLite3MetadataManager(object):
     """docstring for SQLite3MetadataManager
 
-    SQLite3 Metadata Manager is the most basic. 
+    SQLite3 Metadata Manager is the most basic.
 
     It expects a SQLite3 file, formatted as described in
     the LIBREary documentation.
@@ -24,6 +25,7 @@ class SQLite3MetadataManager(object):
     - verify_db_structure
 
     """
+
     def __init__(self, config):
         """
         Constructor for the MedadataManager object. This object can be created manually, but
@@ -40,7 +42,8 @@ class SQLite3MetadataManager(object):
                 config.get("db_file"))
             self.conn = sqlite3.connect(self.metadata_db)
             self.cursor = self.conn.cursor()
-            logger.debug("Metadata Manager Configuration Valid. Creating Metadata Manager")
+            logger.debug(
+                "Metadata Manager Configuration Valid. Creating Metadata Manager")
         except KeyError:
             logger.error("Ingester Configuration Invalid")
             raise KeyError
@@ -50,7 +53,7 @@ class SQLite3MetadataManager(object):
 
     def add_level(self, name: str, frequency: int,
                   adapters: List[dict], copies=1) -> None:
-    """
+        """
         Add a level to the metadata database.
 
         :param name - name for the level

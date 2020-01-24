@@ -87,7 +87,7 @@ class Libreary:
             # Objects we need
             self.adapter_man = AdapterManager(self.config)
             self.ingester = Ingester(self.config)
-            self.metadata_man = self.metadata_manager_translate_table[self.config["metadata"]["manager_type"]](self.config["metadata"])
+            self.metadata_man = metadata_manager_translate_table[self.config["metadata"]["manager_type"]](self.config["metadata"])
             logger.debug("LIBREary configuration valid. Proceeding.")
         except KeyError:
             logger.error("Invalid LIBREary config. Exiting.")
