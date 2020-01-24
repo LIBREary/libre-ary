@@ -47,3 +47,35 @@ class SQLite3MetadataManager(object):
 
     def verify_db_structure(self) -> bool:
         pass
+
+    def add_level(self, name: str, frequency: int,
+                  adapters: List[dict], copies=1) -> None:
+    """
+        Add a level to the metadata database.
+
+        :param name - name for the level
+        :param frequency - check frequency for level. Currently unimplemented
+        :param adapters - dict object specifying adapters the level uses. Example:
+            ```{json}
+            [
+                {
+                "id": "local1",
+                "type":"LocalAdapter"
+                },
+                {
+                "id": "local2",
+                "type":"LocalAdapter"
+                }
+            ]
+
+            ```
+        :param copies - copies to store for each adapter. Currently, only 1 is supported
+        """
+        str_adapters = json.dumps(adapters)
+        self.cursor.execute(
+            "insert into levels values (?, ?, ?, ?)",
+            (name,
+             frequency,
+             str_adapters,
+             copies))
+        self.conn.commit()

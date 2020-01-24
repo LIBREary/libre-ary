@@ -1,6 +1,7 @@
 {
     "metadata": {
-        "db_file": "/Users/ben/desktop/libre-ary/libreary/metadata/md_index.db"
+        "db_file": "/Users/ben/desktop/libre-ary/libreary/metadata/md_index.db",
+        "manager_type": "SQLite3MetadataManager"
     },
     "adapters":[{
         "type":"LocalAdapter",
