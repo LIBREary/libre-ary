@@ -78,8 +78,9 @@ class SQLite3MetadataManager(object):
         logger.debug(f"Adding level {name}")
         str_adapters = json.dumps(adapters)
         self.cursor.execute(
-            "insert into levels values (?, ?, ?, ?)",
-            (name,
+            "insert into levels values (?, ?, ?, ?, ?)",
+            (None,
+             name,
              frequency,
              str_adapters,
              copies))
