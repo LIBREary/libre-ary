@@ -5,7 +5,6 @@ import random
 import hashlib
 import shutil
 from typing import List
-import sqlite3
 import logging
 
 from libreary.adapters.BaseAdapter import BaseAdapter

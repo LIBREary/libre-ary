@@ -1,4 +1,3 @@
-import sqlite3
 import os
 from shutil import copyfile
 import hashlib
@@ -6,7 +5,6 @@ import json
 import pickle
 import io
 from pathlib import Path
-from typing import List
 import logging
 
 

@@ -1,4 +1,3 @@
-import sqlite3
 import os
 from shutil import copyfile
 import hashlib
@@ -129,7 +128,7 @@ class Ingester:
         canonical_checksum = resource_info[4]
 
         canonical_adapter = AdapterManager.create_adapter(
-            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.metadata_man)
         checksum = canonical_adapter.get_actual_checksum(r_id)
 
         if checksum == canonical_checksum:

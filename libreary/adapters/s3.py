@@ -1,8 +1,6 @@
 import json
 import os
-import sqlite3
 import hashlib
-from typing import List
 import logging
 
 try:
