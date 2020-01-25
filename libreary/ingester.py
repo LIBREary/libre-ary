@@ -1,9 +1,6 @@
-import sqlite3
 import os
-from shutil import copyfile
 import hashlib
 import uuid
-import json
 from typing import List
 import logging
 
@@ -15,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Ingester:
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata_man: object = None):
         """
         Constructor for the Ingester object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
@@ -40,18 +37,19 @@ class Ingester:
         ```
         """
         try:
-            self.metadata_db = os.path.realpath(
-                config['metadata'].get("db_file"))
-            self.conn = sqlite3.connect(self.metadata_db)
-            self.cursor = self.conn.cursor()
             self.dropbox_dir = config["options"]["dropbox_dir"]
             self.canonical_adapter_id = config["canonical_adapter"]
             self.canonical_adapter_type = config["canonical_adapter"]
             self.config_dir = config["options"]["config_dir"]
+
+            self.metadata_man = metadata_man
+            if self.metadata_man is None:
+                raise KeyError
+
             logger.debug("Ingester configuration valid, creating Ingester.")
-        except KeyError:
+        except KeyError as e:
             logger.error("Ingester Configuration Invalid")
-            raise KeyError
+            raise e
 
     def ingest(self, current_file_path: str, levels: List[str],
                description: str, delete_after_store: bool = False) -> str:
@@ -68,7 +66,7 @@ class Ingester:
         checksum = sha1Hash.hexdigest()
 
         canonical_adapter = AdapterManager.create_adapter(
-            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.metadata_man)
 
         obj_uuid = str(uuid.uuid4())
 
@@ -80,11 +78,13 @@ class Ingester:
         levels = ",".join([str(l) for l in levels])
 
         # Ingest to db
-
-        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)",
-                            (None, canonical_adapter_locator, levels, filename, checksum, obj_uuid, description))
-
-        self.conn.commit()
+        self.metadata_man.ingest_to_db(
+            canonical_adapter_locator,
+            levels,
+            filename,
+            checksum,
+            obj_uuid,
+            description)
 
         # If file is not in dropbox, copy it there
 
@@ -110,7 +110,7 @@ class Ingester:
         This method trusts the metadata database. There should be a separate method to
         verify the metadata db so that we know we can trust this info
         """
-        return self.cursor.execute("select * from resources").fetchall()
+        return self.metadata_man.list_resources()
 
     def delete_resource(self, r_id: str) -> None:
         """
@@ -122,12 +122,11 @@ class Ingester:
         :param r_id - the UUID of the resouce you're deleting
         """
 
-        resource_info = self.cursor.execute(
-            "select * from resources where id=?", (r_id,))
+        resource_info = self.metadata_man.get_resource_info(r_id)
         canonical_checksum = resource_info[4]
 
         canonical_adapter = AdapterManager.create_adapter(
-            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.metadata_man)
         checksum = canonical_adapter.get_actual_checksum(r_id)
 
         if checksum == canonical_checksum:
@@ -138,5 +137,4 @@ class Ingester:
             raise ChecksumMismatchException
 
         logger.debug(f"Deleting object {r_id} from resources database")
-        self.cursor.execute("delete from resources where id=?", (r_id,))
-        self.conn.commit()
+        self.metadata_man.delete_resource(r_id)

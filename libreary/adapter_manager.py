@@ -5,7 +5,6 @@ import random
 import hashlib
 import shutil
 from typing import List
-import sqlite3
 import logging
 
 from libreary.adapters.BaseAdapter import BaseAdapter
@@ -51,7 +50,7 @@ class AdapterManager:
     - verify_copy (check if a copy matches the canonicl copy)
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata_man: object = None):
         """
         Constructor for the AdapterManager object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict
@@ -78,16 +77,15 @@ class AdapterManager:
         try:
             self.config = config
             self.all_adapters = self.config["adapters"]
-            self.metadata_db = os.path.realpath(
-                config['metadata'].get("db_file"))
-            self.conn = sqlite3.connect(self.metadata_db)
-            self.cursor = self.conn.cursor()
             self.dropbox_dir = config["options"]["dropbox_dir"]
             self.ret_dir = config["options"]["output_dir"]
             self.config_dir = config["options"]["config_dir"]
             self.levels = {}
             self.adapters = {}
             self.canonical_adapter = self.config["canonical_adapter"]
+            self.metadata_man = metadata_man
+            if self.metadata_man is None:
+                raise KeyError
             logger.debug(
                 "Adapter Manager Configuration Valid, creating Adapter Manager")
         except KeyError:
@@ -122,7 +120,7 @@ class AdapterManager:
          "adapters": (dict) dictionary of adapters associated with this level}
         ```
         """
-        level_data = self.cursor.execute("select * from levels").fetchall()
+        level_data = self.metadata_man.get_levels()
         levels = {}
         for level in level_data:
             levels[level[1]] = {"id": level[0],
@@ -130,7 +128,7 @@ class AdapterManager:
                                 "frequency": level[2],
                                 "adapters": json.loads(level[3])}
             logger.debug(
-                f"Fould level {level[1]} with adapters {json.loads(level[3])}")
+                f"Found level {level[1]} with adapters {json.loads(level[3])}")
         return levels
 
     def _set_levels(self) -> None:
@@ -163,7 +161,7 @@ class AdapterManager:
             # Each level may need several adapters
             for adapter in level["adapters"]:
                 adapters[adapter["id"]] = self.create_adapter(
-                    adapter["type"], adapter["id"], self.config_dir)
+                    adapter["type"], adapter["id"], self.config_dir, self.metadata_man)
                 logger.debug(
                     f"Created adapter {adapter['id']} of type {adapter['type']}")
         logger.debug(f"Summary of all adapters: {adapters}")
@@ -199,7 +197,7 @@ class AdapterManager:
             Must be the actual class name, i.e. "LocalAdapter".
         """
         adapter = self.create_adapter(
-            adapter_type, adapter_id, self.config_dir)
+            adapter_type, adapter_id, self.config_dir, self.metadata_man)
         self.adapters[adapter_id] = adapter
         logger.debug(
             f"Manually added adapter {adapter_id} of type {adapter_type}")
@@ -232,10 +230,7 @@ class AdapterManager:
             real_checksum,
             "libreary_test_resource.txt")
 
-        # Do minimal ingestion so that adapter knows what it needs to retrieve
-        self.cursor.execute("insert into resources values (?, ?, ?, ?, ?, ?, ?)",
-                            (None, locator, "low,", "libreary_test_file.txt", real_checksum, r_id, "A resource for testing LIBREary adapters with"))
-        self.conn.commit()
+        self.metadata_man.minimal_test_ingest(locator, real_checksum, r_id)
 
         new_path = adapter.retrieve(r_id)
         new_checksum = hashlib.sha1(open(new_path, "rb").read()).hexdigest()
@@ -250,20 +245,18 @@ class AdapterManager:
         try:
             os.remove(new_path)
         except Exception:
-            pass
+            return
 
         os.remove(dropbox_path)
 
         # Delete from res table
-        self.cursor.execute("delete from resources where uuid=?",
-                            (r_id,))
-        self.conn.commit()
+        self.metadata_man.delete_resource(r_id)
 
         return r_val
 
     @staticmethod
     def create_adapter(adapter_type: str, adapter_id: str,
-                       config_dir: str) -> BaseAdapter:
+                       config_dir: str, metadata_man: object) -> BaseAdapter:
         """
         Static method for creating and returning an adapter object.
         This is essentially an Adapter factory.
@@ -275,7 +268,7 @@ class AdapterManager:
         """
         cfg = AdapterManager.create_config_for_adapter(
             adapter_id, adapter_type, config_dir)
-        adapter = eval("{}({})".format(adapter_type, cfg))
+        adapter = eval("{}({}, {})".format(adapter_type, cfg, metadata_man))
         return adapter
 
     @staticmethod
@@ -402,9 +395,7 @@ class AdapterManager:
         # Because d_r_f_a doesn't delete canonical copy, we can simply use
         # it to reset
         self.delete_resource_from_adapters(r_id)
-        sql = "update resources set levels = '?' where uuid=?"
-        self.cursor.execute(sql, (r_id, ",".join([l for l in new_levels])))
-        self.conn.commit()
+        self.metadata_man.update_resource_levels(r_id, new_levels)
         # now that we've updated the levels, we refresh levels
         self.reload_levels_adapters()
         # now, we can just act as if it has never been sent off:
@@ -422,8 +413,7 @@ class AdapterManager:
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        sql = "select * from copies where resource_id = '{}'".format(r_id)
-        return self.cursor.execute(sql).fetchall()
+        return self.metadata_man.summarize_copies(r_id)
 
     def get_canonical_copy_metadata(self, r_id: str) -> List[List[str]]:
         """
@@ -432,9 +422,7 @@ class AdapterManager:
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        sql = "select * from copies where resource_id = '{}' and canonical=1".format(
-            r_id)
-        return self.cursor.execute(sql).fetchall()
+        return self.metadata_man.get_canonical_copy_metadata(self, r_id)
 
     def retrieve_by_preference(self, r_id: str) -> str:
         """
@@ -504,7 +492,7 @@ class AdapterManager:
                 f"Could not find resource {r_id} in adapter {adapter_id}")
             try:
                 a = AdapterManager.create_adapter(
-                    adapter_type, adapter_id)
+                    adapter_type, adapter_id, self.metadata_man)
                 a.store(r_id)
                 found = True
             except AdapterCreationFailedException:
@@ -564,8 +552,7 @@ class AdapterManager:
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        return self.cursor.execute(
-            "select * from resources where uuid='{}'".format(r_id)).fetchall()
+        return self.metadata_man.get_resource_info(r_id)
 
     def restore_canonical_copy(self, r_id: str) -> None:
         """
@@ -641,12 +628,8 @@ class AdapterManager:
         :param deep - specify whether to run a deep or shallow check
         """
         try:
-            copy_info_1 = self.cursor.execute(
-                "select * from copies where resource_id=? and adapter_identifier=? limit 1",
-                (r_id, adapter_id_1)).fetchall()[0]
-            copy_info_2 = self.cursor.execute(
-                "select * from copies where resource_id=? and adapter_identifier=? limit 1",
-                (r_id, adapter_id_2)).fetchall()[0]
+            copy_info_1 = self.metadata_man.get_copy_info(r_id, adapter_id_1)
+            copy_info_2 = self.metadata_man.get_copy_info(r_id, adapter_id_2)
         except IndexError:
             logger.error(f"No copy of object {r_id} exists.")
             raise NoCopyExistsException

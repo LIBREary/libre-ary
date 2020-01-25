@@ -1,8 +1,6 @@
 import json
 import os
-import sqlite3
 import hashlib
-from typing import List
 import logging
 
 try:
@@ -30,7 +28,7 @@ class S3Adapter:
         S3Adapter allows users to store objects in AWS S3.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata_man: object = None):
         """
         Constructor for S3Adapter. Expects a python dict :param `config`
             in the following format:
@@ -58,11 +56,7 @@ class S3Adapter:
         """
         self.config = config
         try:
-            self.metadata_db = os.path.realpath(
-                config['metadata'].get("db_file"))
             self.adapter_id = config["adapter"]["adapter_identifier"]
-            self.conn = sqlite3.connect(self.metadata_db)
-            self.cursor = self.conn.cursor()
             self.adapter_type = "S3Adapter"
             self.dropbox_dir = config["options"]["dropbox_dir"]
             self.ret_dir = config["options"]["output_dir"]
@@ -78,6 +72,11 @@ class S3Adapter:
 
             self.env_specified = os.getenv("AWS_ACCESS_KEY_ID") is not None and os.getenv(
                 "AWS_SECRET_ACCESS_KEY") is not None
+
+            self.metadata_man = metadata_man
+            if self.metadata_man is None:
+                raise KeyError
+
             logger.debug("Creating S3 Adapter")
         except KeyError:
             logger.error("Invalid configuration for S3 Adapter")
@@ -175,7 +174,7 @@ class S3Adapter:
         """
         logger.debug(f"Storing object {r_id} to adapter {self.adapter_id}")
 
-        file_metadata = self.load_metadata(r_id)[0]
+        file_metadata = self.metadata_man.get_resource_info(r_id)[0]
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
@@ -183,9 +182,8 @@ class S3Adapter:
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
-        other_copies = self.cursor.execute(
-            "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
-                r_id, self.adapter_id)).fetchall()
+        other_copies = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=False)
         if len(other_copies) != 0:
             logger.debug(
                 f"Other copies of {r_id} from {self.adapter_id} exist")
@@ -201,10 +199,13 @@ class S3Adapter:
             logger.error(f"Checksum Mismatch on {r_id} from {self.adapter_id}")
             raise ChecksumMismatchException
 
-        self.cursor.execute(
-            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
-        self.conn.commit()
+        self.metadata_man.add_copy(
+            r_id,
+            self.adapter_id,
+            locator,
+            sha1Hashed,
+            self.adapter_type,
+            canonical=False)
 
     def _store_canonical(self, current_path: str, r_id: str,
                          checksum: str, filename: str) -> str:
@@ -230,9 +231,8 @@ class S3Adapter:
 
         locator = "{}_{}_canonical".format(filename, r_id)
 
-        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format(
-            str(r_id), self.adapter_id)
-        other_copies = self.cursor.execute(sql).fetchall()
+        other_copies = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=True)
         if len(other_copies) != 0:
             logger.error(
                 f"Other canonical copies of {r_id} from {self.adapter_id} exist")
@@ -244,10 +244,13 @@ class S3Adapter:
             logger.error(f"Checksum Mismatch on {r_id} from {self.adapter_id}")
             raise ChecksumMismatchException
 
-        self.cursor.execute(
-            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, True])
-        self.conn.commit()
+        self.metadata_man.add_copy(
+            r_id,
+            self.adapter_id,
+            locator,
+            sha1Hashed,
+            self.adapter_type,
+            canonical=True)
 
         return locator
 
@@ -265,14 +268,18 @@ class S3Adapter:
         :param r_id - the resource to retrieve's UUID
         """
         try:
-            filename = self.load_metadata(r_id)[0][3]
+            filename = self.metadata_man.get_resource_info(r_id)[0][3]
         except IndexError:
             logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
 
-        copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
+        try:
+            copy_info = self.metadata_man.get_copy_info(
+                r_id, self.adapter_id, canonical=False)[0]
+        except IndexError:
+            logger.error(
+                f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")
+            raise NoCopyExistsException
         expected_hash = copy_info[4]
         copy_locator = copy_info[3]
         real_hash = copy_info[4]
@@ -308,9 +315,13 @@ class S3Adapter:
         :param r_id - the resource to retrieve's UUID
         """
         logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
-        copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
+
+        copy_info = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=False)
+
+        if len(copy_info) == 0:
+            # We've already deleted, probably as part of another level
+            return
         locator = copy_info[3]
 
         self.client.delete_object(
@@ -328,17 +339,20 @@ class S3Adapter:
         """
         logger.debug(
             f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
-        copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
+        try:
+            copy_info = self.metadata_man.get_copy_info(
+                r_id, self.adapter_id, canonical=True)[0]
+        except IndexError:
+            logger.debug(
+                f"Canonical copy of {r_id} on {self.adapter_id} has already been deleted.")
+            return
+
         locator = copy_info[3]
 
         self.client.delete_object(
             Bucket=self.bucket_name, Key=locator)
 
-        self.cursor.execute("delete from copies where copy_id=?",
-                            [copy_info[0]])
-        self.conn.commit()
+        self.metadata_man.delete_copy_metadata(copy_info[0])
 
     def get_actual_checksum(self, r_id: str,
                             delete_after_download: bool = True) -> str:
@@ -364,17 +378,3 @@ class S3Adapter:
             os.remove(new_path)
 
         return sha1Hashed
-
-    def load_metadata(self, r_id: str) -> List[List[str]]:
-        """
-        Get a summary of information about a resource. That summary includes:
-
-        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
-
-        This method trusts the metadata database. There should be a separate method to
-        verify the metadata db so that we know we can trust this info
-
-        :param r_id - UUID of resource you'd like to learn about
-        """
-        return self.cursor.execute(
-            "select * from resources where uuid='{}'".format(r_id)).fetchall()

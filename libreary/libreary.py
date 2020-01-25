@@ -1,13 +1,16 @@
 import json
-import os
-import sqlite3
 from typing import List
 import logging
 
 from libreary.adapter_manager import AdapterManager
 from libreary.ingester import Ingester
+from libreary.metadata.sqlite3 import SQLite3MetadataManager
 
 logger = logging.getLogger(__name__)
+
+metadata_manager_translate_table = {
+    "SQLite3MetadataManager": SQLite3MetadataManager
+}
 
 
 class Libreary:
@@ -74,19 +77,17 @@ class Libreary:
         self.config = json.load(open(self.config_path))
 
         try:
-            # Metadata stuff
-            self.metadata_db = os.path.realpath(
-                self.config['metadata'].get("db_file"))
-            self.conn = sqlite3.connect(self.metadata_db)
-            self.cursor = self.conn.cursor()
-
             # Directories we care about
             self.dropbox_dir = self.config["options"]["dropbox_dir"]
             self.ret_dir = self.config["options"]["output_dir"]
 
             # Objects we need
-            self.adapter_man = AdapterManager(self.config)
-            self.ingester = Ingester(self.config)
+            self.metadata_man = metadata_manager_translate_table[self.config["metadata"]["manager_type"]](
+                self.config["metadata"])
+            self.adapter_man = AdapterManager(
+                self.config, metadata_man=self.metadata_man)
+            self.ingester = Ingester(
+                self.config, metadata_man=self.metadata_man)
             logger.debug("LIBREary configuration valid. Proceeding.")
         except KeyError:
             logger.error("Invalid LIBREary config. Exiting.")
@@ -244,11 +245,4 @@ class Libreary:
         :param copies - copies to store for each adapter. Currently, only 1 is supported
         """
         logger.debug(f"Adding new level: {name}")
-        str_adapters = json.dumps(adapters)
-        self.cursor.execute(
-            "insert into levels values (?, ?, ?, ?)",
-            (name,
-             frequency,
-             str_adapters,
-             copies))
-        self.conn.commit()
+        self.metadata_man.add_level(name, frequency, adapters, copies=1)
