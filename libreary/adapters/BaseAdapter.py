@@ -1,6 +1,3 @@
-from typing import List
-
-
 class BaseAdapter:
     """
     Class definition for the base adapter for libre-ary resource adapters.
