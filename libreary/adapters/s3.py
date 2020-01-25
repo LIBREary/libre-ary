@@ -30,7 +30,7 @@ class S3Adapter:
         S3Adapter allows users to store objects in AWS S3.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata_man:object=None):
         """
         Constructor for S3Adapter. Expects a python dict :param `config`
             in the following format:
@@ -302,7 +302,7 @@ class S3Adapter:
         :param r_id - the resource to retrieve's UUID
         """
         logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
-        
+
         copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)
 
         if len(copy_info) == 0:

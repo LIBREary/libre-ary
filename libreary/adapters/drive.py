@@ -42,7 +42,7 @@ class GoogleDriveAdapter():
 
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, metadata_man:object=None):
         """
         Constructor for GoogleDriveAdapter. Expects a python dict :param `config`
             in the following format:
@@ -69,17 +69,18 @@ class GoogleDriveAdapter():
         }
         """
         try:
-            self.metadata_db = os.path.realpath(
-                config['metadata'].get("db_file"))
             self.adapter_id = config["adapter"]["adapter_identifier"]
-            self.conn = sqlite3.connect(self.metadata_db)
-            self.cursor = self.conn.cursor()
             self.token_file = config["adapter"]["token_file"]
             self.dropbox_dir = config["options"]["dropbox_dir"]
             self.folder_path = config["adapter"]["folder_path"]
             self.adapter_type = "GoogleDriveAdapter"
             self.ret_dir = config["options"]["output_dir"]
             self.credentials_file = config["adapter"]["credentials_file"]
+
+            self.metadata_man = metadata_man
+            if self.metadata_man is None:
+                raise KeyError
+
             logger.debug("Creating Drive Adapter")
         except KeyError:
             logger.error("Invalid configuration for Drive Adapter")
@@ -217,7 +218,7 @@ class GoogleDriveAdapter():
         """
         logger.debug(f"Storing object {r_id} to adapter {self.adapter_id}")
 
-        file_metadata = self.load_metadata(r_id)[0]
+        file_metadata = self.self.metadata_man.get_resource_info(r_id)[0]
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
@@ -227,9 +228,8 @@ class GoogleDriveAdapter():
 
         new_name = "{}_{}".format(r_id, name)
 
-        other_copies = self.cursor.execute(
-            "select * from copies where resource_id='{}' and adapter_identifier='{}' and not canonical = 1 limit 1".format(
-                r_id, self.adapter_id)).fetchall()
+        other_copies = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)
+
         if len(other_copies) != 0:
             logger.debug(
                 f"Other copies of {r_id} from {self.adapter_id} exist")
@@ -241,10 +241,7 @@ class GoogleDriveAdapter():
             logger.error(f"Checksum Mismatch on {r_id} from {self.adapter_id}")
             raise ChecksumMismatchException
 
-        self.cursor.execute(
-            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, False])
-        self.conn.commit()
+        self.metadata_man.add_copy(r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=False)
 
     def retrieve(self, r_id: str) -> str:
         """
@@ -262,14 +259,12 @@ class GoogleDriveAdapter():
         logger.debug(
             f"Retrieving object {r_id} from adapter {self.adapter_id}")
         try:
-            filename = self.load_metadata(r_id)[0][3]
+            filename = self.self.metadata_man.get_resource_info(r_id)[0][3]
         except IndexError:
             logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
         try:
-            copy_info = self.cursor.execute(
-                "select * from copies where resource_id=? and adapter_identifier=? limit 1",
-                (r_id, self.adapter_id)).fetchall()[0]
+            copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)[0]
         except IndexError:
             logger.error(
                 f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")
@@ -334,9 +329,7 @@ class GoogleDriveAdapter():
         sha1Hash = hashlib.sha1(open(current_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
-        sql = "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = 1 limit 1".format(
-            str(r_id), self.adapter_id)
-        other_copies = self.cursor.execute(sql).fetchall()
+        other_copies = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=True)
         if len(other_copies) != 0:
             logger.error(
                 f"Other canonical copies of {r_id} from {self.adapter_id} exist")
@@ -348,10 +341,8 @@ class GoogleDriveAdapter():
             logger.error(f"Checksum Mismatch on object {r_id}")
             raise ChecksumMismatchException
 
-        self.cursor.execute(
-            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, locator, sha1Hashed, self.adapter_type, True])
-        self.conn.commit()
+        self.metadata_man.add_copy(r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=True)
+
 
         return locator
 
@@ -364,9 +355,7 @@ class GoogleDriveAdapter():
         """
         logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
 
-        copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? and not canonical = 1 limit 1",
-            (r_id, self.adapter_id)).fetchall()
+        copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)
 
         if len(copy_info) == 0:
             # We've already deleted, probably as part of another level
@@ -377,9 +366,7 @@ class GoogleDriveAdapter():
 
         self.service.files().delete(fileId=copy_locator).execute()
 
-        self.cursor.execute("delete from copies where copy_id=?",
-                            [copy_info[0]])
-        self.conn.commit()
+        self.metadata_man.delete_copy_metadata(copy_info[0])
 
     def _delete_canonical(self, r_id: str) -> None:
         """
@@ -391,30 +378,17 @@ class GoogleDriveAdapter():
         logger.debug(
             f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
 
-        copy_info = self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? and canonical = 1 limit 1",
-            (r_id, self.adapter_id)).fetchall()[0]
+        try:
+            copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=True)[0]
+        except IndexError:
+            logger.debug(f"Canonical copy of {r_id} on {self.adapter_id} has already been deleted.")
+            return
+            
         copy_locator = copy_info[3]
 
         self.service.files().delete(fileId=copy_locator).execute()
 
-        self.cursor.execute("delete from copies where copy_id=?",
-                            [copy_info[0]])
-        self.conn.commit()
-
-    def load_metadata(self, r_id: str) -> List[List[str]]:
-        """
-        Get a summary of information about a resource. That summary includes:
-
-        `id`, `path`, `levels`, `file name`, `checksum`, `object uuid`, `description`
-
-        This method trusts the metadata database. There should be a separate method to
-        verify the metadata db so that we know we can trust this info
-
-        :param r_id - UUID of resource you'd like to learn about
-        """
-        return self.cursor.execute(
-            "select * from resources where uuid='{}'".format(r_id)).fetchall()
+        self.metadata_man.delete_copy_metadata(copy_info[0])
 
     def get_actual_checksum(self, r_id: str,
                             delete_after_download: bool = True) -> str:
