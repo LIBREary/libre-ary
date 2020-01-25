@@ -12,8 +12,8 @@ except ImportError:
 else:
     _boto_enabled = True
 
-from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
-from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
+from libreary.exceptions import StorageFailedException, ConfigurationError, OptionalModuleMissingException
 
 logger = logging.getLogger(__name__)
 
