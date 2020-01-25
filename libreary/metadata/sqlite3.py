@@ -195,7 +195,7 @@ class SQLite3MetadataManager(object):
                       canonical: bool = False):
         """
         Get a summary of a copy of an object. Can be canonical or not.
-
+        
         :param r_id - object you want to learn about
         :param adapter_id - adapter storing the copy
         :canonical - True if you want to look for canonical copy
@@ -216,7 +216,7 @@ class SQLite3MetadataManager(object):
         self.conn.commit()
 
     def add_copy(self, r_id: str, adapter_id: str, new_location: str,
-                 sha1Hashed: str, adapter_type: str, canonical: bool=False):
+                 sha1Hashed: str, adapter_type: str, canonical: bool = False):
         """
         Add a copy of an object to the metadata database
 
