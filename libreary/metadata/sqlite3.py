@@ -201,8 +201,8 @@ class SQLite3MetadataManager(object):
             r_id)
         return self.cursor.execute(sql).fetchall()
 
-
-    def get_copy_info(self, r_id: str, adapter_id: str, canonical: bool=False):
+    def get_copy_info(self, r_id: str, adapter_id: str,
+                      canonical: bool = False):
         """
         Get a summary of a copy of an object. Can be canonical or not.
 
@@ -210,7 +210,7 @@ class SQLite3MetadataManager(object):
         :param adapter_id - adapter storing the copy
         :canonical - True if you want to look for canonical copy
         """
-        canonical = "1" if canonical == True else "0"
+        canonical = "1" if canonical else "0"
         return self.cursor.execute(
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = {} limit 1".format(
                 r_id, adapter_id, canonical)).fetchall()
@@ -225,7 +225,7 @@ class SQLite3MetadataManager(object):
                             copy_id)
         self.conn.commit()
 
-    def add_copy(self, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=False):
+    def add_copy(self, r_id, adapter_id, new_location, sha1Hashed, adapter_type, canonical=False):
         """
         Add a copy of an object to the metadata database
 
@@ -235,5 +235,3 @@ class SQLite3MetadataManager(object):
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
             [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical])
         self.conn.commit()
-
-

@@ -31,7 +31,7 @@ class LocalAdapter():
         any configuration difficulty.
     """
 
-    def __init__(self, config: dict, metadata_man: object=None):
+    def __init__(self, config: dict, metadata_man: object = None):
         """
         Constructor for LocalAdapter. Expects a python dict :param `config`
             in the following format:
@@ -98,8 +98,9 @@ class LocalAdapter():
         if os.path.isfile(new_location):
             new_location = "{}_{}".format(new_location, r_id)
 
-        other_copies = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)
-        
+        other_copies = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=False)
+
         if len(other_copies) != 0:
             logger.debug(
                 f"Other copies of {r_id} from {self.adapter_id} exist")
@@ -111,7 +112,13 @@ class LocalAdapter():
             logger.error(f"Checksum Mismatch on object {r_id}")
             raise ChecksumMismatchException
 
-        self.metadata_man.add_copy(r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=False)
+        self.metadata_man.add_copy(
+            r_id,
+            self.adapter_id,
+            new_location,
+            sha1Hashed,
+            self.adapter_type,
+            canonical=False)
 
     def retrieve(self, r_id: str) -> str:
         """
@@ -134,7 +141,8 @@ class LocalAdapter():
             logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
         try:
-            copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)[0]
+            copy_info = self.metadata_man.get_copy_info(
+                r_id, self.adapter_id, canonical=False)[0]
         except IndexError:
             logger.error(
                 f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")
@@ -194,7 +202,8 @@ class LocalAdapter():
         if os.path.isfile(new_location):
             new_location = "{}_{}".format(new_location, r_id)
 
-        other_copies = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=True)
+        other_copies = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=True)
         if len(other_copies) != 0:
             logger.error(
                 f"Other canonical copies of {r_id} from {self.adapter_id} exist")
@@ -206,7 +215,13 @@ class LocalAdapter():
             logger.error(f"Checksum Mismatch on object {r_id}")
             raise ChecksumMismatchException
 
-        self.metadata_man.add_copy(r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=True)
+        self.metadata_man.add_copy(
+            r_id,
+            self.adapter_id,
+            new_location,
+            sha1Hashed,
+            self.adapter_type,
+            canonical=True)
 
         return new_location
 
@@ -218,7 +233,8 @@ class LocalAdapter():
         :param r_id - the resource to retrieve's UUID
         """
         logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
-        copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)
+        copy_info = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=False)
 
         if len(copy_info) == 0:
             # We've already deleted, probably as part of another level
@@ -241,7 +257,8 @@ class LocalAdapter():
         """
         logger.debug(
             f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
-        copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=True)
+        copy_info = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id, canonical=True)
         copy_path = copy_info[3]
 
         os.remove(copy_path)
@@ -260,7 +277,8 @@ class LocalAdapter():
         """
         logger.debug(
             f"Getting actual checksum of object {r_id} from adapter {self.adapter_id}")
-        copy_info = self.metadata_man.get_copy_info(self, r_id, self.adapter_id, canonical=False)
+        copy_info = self.metadata_man.get_copy_info(
+            self, r_id, self.adapter_id, canonical=False)
         path = copy_info[3]
         hash_obj = hashlib.sha1(open(path, "rb").read())
         checksum = hash_obj.hexdigest()
