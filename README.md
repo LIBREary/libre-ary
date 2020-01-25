@@ -1,4 +1,4 @@
-# LIBREary [![Documentation Status](https://readthedocs.org/projects/libre-ary/badge/?version=master)](https://libre-ary.readthedocs.io/en/master/?badge=master) [![Build Status](https://travis-ci.com/LIBREary/libre-ary.svg?branch=master)](https://travis-ci.com/LIBREary/libre-ary)
+# LIBREary [![Documentation Status](https://readthedocs.org/projects/libre-ary/badge/?version=master)](https://libre-ary.readthedocs.io/en/master/?badge=master) [![Build Status](https://travis-ci.com/LIBREary/libre-ary.svg?branch=master)](https://travis-ci.com/LIBREary/libre-ary) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/71f7de3f657b4958a39cb2170f841ae5)](https://www.codacy.com/gh/LIBREary/libre-ary?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=LIBREary/libre-ary&amp;utm_campaign=Badge_Grade)
 
 
 ## What is this?
