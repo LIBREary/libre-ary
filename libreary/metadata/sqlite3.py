@@ -215,8 +215,8 @@ class SQLite3MetadataManager(object):
                             copy_id)
         self.conn.commit()
 
-    def add_copy(self, r_id, adapter_id, new_location,
-                 sha1Hashed, adapter_type, canonical=False):
+    def add_copy(self, r_id: str, adapter_id: str, new_location: str,
+                 sha1Hashed: str, adapter_type: str, canonical: bool=False):
         """
         Add a copy of an object to the metadata database
 
