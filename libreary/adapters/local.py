@@ -3,8 +3,8 @@ from shutil import copyfile
 import hashlib
 import logging
 
-from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
-from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, StorageFailedException
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException
+from libreary.exceptions import StorageFailedException, NoCopyExistsException
 
 logger = logging.getLogger(__name__)
 
