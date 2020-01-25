@@ -68,7 +68,7 @@ class Ingester:
         checksum = sha1Hash.hexdigest()
 
         canonical_adapter = AdapterManager.create_adapter(
-            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir)
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.metadata_man)
 
         obj_uuid = str(uuid.uuid4())
 
