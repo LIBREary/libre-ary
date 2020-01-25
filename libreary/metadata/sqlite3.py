@@ -1,13 +1,8 @@
 import sqlite3
 import os
-from shutil import copyfile
-import hashlib
-import uuid
 import json
 from typing import List
 import logging
-
-from libreary.exceptions import ChecksumMismatchException
 
 logger = logging.getLogger(__name__)
 
@@ -187,8 +182,8 @@ class SQLite3MetadataManager(object):
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        sql = "select * from copies where resource_id = '{}'".format(r_id)
-        return self.cursor.execute(sql).fetchall()
+        sql = "select * from copies where resource_id = '?'"
+        return self.cursor.execute(sql, (r_id,)).fetchall()
 
     def get_canonical_copy_metadata(self, r_id: str) -> List[List[str]]:
         """
@@ -197,9 +192,9 @@ class SQLite3MetadataManager(object):
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        sql = "select * from copies where resource_id = '{}' and canonical=1".format(
-            r_id)
-        return self.cursor.execute(sql).fetchall()
+        sql = "select * from copies where resource_id = '?' and canonical=1"
+        return self.cursor.execute(sql, (
+            r_id,)).fetchall()
 
     def get_copy_info(self, r_id: str, adapter_id: str,
                       canonical: bool = False):
@@ -212,7 +207,7 @@ class SQLite3MetadataManager(object):
         """
         canonical = "1" if canonical else "0"
         return self.cursor.execute(
-            "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = {} limit 1".format(
+            "select * from copies where resource_id='?' and adapter_identifier='?' and canonical = ? limit 1", (
                 r_id, adapter_id, canonical)).fetchall()
 
     def delete_copy_metadata(self, copy_id: str):
@@ -225,7 +220,8 @@ class SQLite3MetadataManager(object):
                             copy_id)
         self.conn.commit()
 
-    def add_copy(self, r_id, adapter_id, new_location, sha1Hashed, adapter_type, canonical=False):
+    def add_copy(self, r_id, adapter_id, new_location,
+                 sha1Hashed, adapter_type, canonical=False):
         """
         Add a copy of an object to the metadata database
 
