@@ -112,7 +112,6 @@ class LocalAdapter():
             raise ChecksumMismatchException
 
         self.metadata_man.add_copy(r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=False)
-        self.conn.commit()
 
     def retrieve(self, r_id: str) -> str:
         """
@@ -135,7 +134,7 @@ class LocalAdapter():
             logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
         try:
-            copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)
+            copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id, canonical=False)[0]
         except IndexError:
             logger.error(
                 f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")

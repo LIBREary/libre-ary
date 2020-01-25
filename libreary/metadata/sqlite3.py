@@ -215,9 +215,25 @@ class SQLite3MetadataManager(object):
             "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = {} limit 1".format(
                 r_id, adapter_id, canonical)).fetchall()
 
-    def delete_copy_metadata(copy_info):
+    def delete_copy_metadata(self, copy_id: str):
+        """
+        Delete object metadata for a single copy
+
+        :param copy_id -  The copy id (not resource uuid) to delete
+        """
         self.cursor.execute("delete from copies where copy_id=?",
-                            [copy_info[0]])
+                            copy_id)
+        self.conn.commit()
+
+    def add_copy(self, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical, canonical=False):
+        """
+        Add a copy of an object to the metadata database
+
+
+        """
+        self.cursor.execute(
+            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
+            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical])
         self.conn.commit()
 
 
