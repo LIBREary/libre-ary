@@ -1,9 +1,6 @@
 import os
-from shutil import copyfile
 import hashlib
-import json
 import pickle
-import io
 from pathlib import Path
 import logging
 
@@ -19,8 +16,8 @@ except ImportError:
 else:
     _google_enabled = True
 
-from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
-from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException
+from libreary.exceptions import StorageFailedException, NoCopyExistsException, OptionalModuleMissingException
 
 # Google Drive Scope
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -306,6 +303,8 @@ class GoogleDriveAdapter():
         done = False
         while done is False:
             status, done = downloader.next_chunk()
+            if not status:
+                raise ChecksumMismatchException
 
     def update(self, r_id: str, updated: str) -> None:
         """

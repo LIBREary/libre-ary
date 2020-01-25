@@ -12,8 +12,8 @@ except ImportError:
 else:
     _boto_enabled = True
 
-from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
-from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException, ConfigurationError
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
+from libreary.exceptions import StorageFailedException, ConfigurationError, OptionalModuleMissingException
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,9 @@ class S3Adapter:
             self.initialize_boto_client()
         except Exception as e:
             logger.error(f"Could not create AWS session")
+            raise e
+        except ClientError as e:
+            logger.error(f"Could not create AWS session - Boto3 client failed.")
             raise e
 
         self._create_bucket_if_nonexistent()

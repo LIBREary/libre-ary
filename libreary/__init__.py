@@ -97,9 +97,8 @@ class NullHandler(logging.Handler):
         pass
 
 
-__all__ = [Libreary, AdapterManager, Ingester, Scheduler, set_stream_logger,
-           set_file_logger,
-           AUTO_LOGNAME]
+__all__ = ["Libreary", "AdapterManager", "Ingester", "Scheduler", "set_stream_logger",
+           "set_file_logger", "AUTO_LOGNAME"]
 
 
 logging.getLogger('libreary').addHandler(NullHandler())
