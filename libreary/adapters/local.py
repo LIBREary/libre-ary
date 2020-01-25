@@ -1,11 +1,10 @@
 import os
 from shutil import copyfile
 import hashlib
-import json
 import logging
 
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
-from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException
+from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, StorageFailedException
 
 logger = logging.getLogger(__name__)
 
