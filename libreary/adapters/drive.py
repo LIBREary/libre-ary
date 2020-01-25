@@ -16,8 +16,8 @@ except ImportError:
 else:
     _google_enabled = True
 
-from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException, OptionalModuleMissingException
-from libreary.exceptions import RestorationFailedException, AdapterCreationFailedException, AdapterRestored, StorageFailedException
+from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException
+from libreary.exceptions import StorageFailedException, NoCopyExistsException, OptionalModuleMissingException
 
 # Google Drive Scope
 SCOPES = ['https://www.googleapis.com/auth/drive']
