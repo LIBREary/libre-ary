@@ -480,7 +480,7 @@ class AdapterManager:
                         logger.debug(
                             f"Trying to restore resource {r_id} from canonical copy")
                         self.restore_from_canonical_copy(
-                            self, adapter_id, r_id)
+                            adapter_id, r_id)
                     except RestorationFailedException:
                         logger.error(
                             "Restoration of {} in {} failed".format(
@@ -492,7 +492,7 @@ class AdapterManager:
                 f"Could not find resource {r_id} in adapter {adapter_id}")
             try:
                 a = AdapterManager.create_adapter(
-                    adapter_type, adapter_id, self.metadata_man)
+                    adapter_type, adapter_id, self.config_dir, self.metadata_man)
                 a.store(r_id)
                 found = True
             except AdapterCreationFailedException:
@@ -529,7 +529,7 @@ class AdapterManager:
         if new_checksum != recorded_checksum:
             try:
                 logger.debug(f"Restoring copy of {r_id} in {adapter_id}")
-                self.restore_from_canonical_copy(self, adapter_id, r_id)
+                self.restore_from_canonical_copy(adapter_id, r_id)
             except RestorationFailedException:
                 logger.error(
                     "Restoration of {} in {} failed".format(
