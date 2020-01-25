@@ -14,14 +14,9 @@ class SQLite3MetadataManager(object):
 
     It expects a SQLite3 file, formatted as described in
     the LIBREary documentation.
-
-    This object contains the following methods:
-
-    - verify_db_structure
-
     """
 
-    def __init__(self, config):
+    def __init__(self, config: dict):
         """
         Constructor for the MedadataManager object. This object can be created manually, but
         in most cases, it will be constructed by the LIBRE-ary main object. It expects a python dict

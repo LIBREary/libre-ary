@@ -1,9 +1,7 @@
-import sqlite3
 import os
 from shutil import copyfile
 import hashlib
 import json
-from typing import List
 import logging
 
 from libreary.exceptions import ResourceNotIngestedException, ChecksumMismatchException, NoCopyExistsException
