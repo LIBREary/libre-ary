@@ -245,7 +245,7 @@ class AdapterManager:
         try:
             os.remove(new_path)
         except Exception:
-            pass
+            return
 
         os.remove(dropbox_path)
 
