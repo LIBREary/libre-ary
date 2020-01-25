@@ -40,8 +40,6 @@ class Ingester:
         ```
         """
         try:
-            self.metadata_db = os.path.realpath(
-                config['metadata'].get("db_file"))
             self.dropbox_dir = config["options"]["dropbox_dir"]
             self.canonical_adapter_id = config["canonical_adapter"]
             self.canonical_adapter_type = config["canonical_adapter"]

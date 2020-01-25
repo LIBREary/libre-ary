@@ -162,7 +162,7 @@ class AdapterManager:
             # Each level may need several adapters
             for adapter in level["adapters"]:
                 adapters[adapter["id"]] = self.create_adapter(
-                    adapter["type"], adapter["id"], self.config_dir)
+                    adapter["type"], adapter["id"], self.config_dir, self.metadata_man)
                 logger.debug(
                     f"Created adapter {adapter['id']} of type {adapter['type']}")
         logger.debug(f"Summary of all adapters: {adapters}")
@@ -198,7 +198,7 @@ class AdapterManager:
             Must be the actual class name, i.e. "LocalAdapter".
         """
         adapter = self.create_adapter(
-            adapter_type, adapter_id, self.config_dir)
+            adapter_type, adapter_id, self.config_dir, self.metadata_man)
         self.adapters[adapter_id] = adapter
         logger.debug(
             f"Manually added adapter {adapter_id} of type {adapter_type}")
@@ -257,7 +257,7 @@ class AdapterManager:
 
     @staticmethod
     def create_adapter(adapter_type: str, adapter_id: str,
-                       config_dir: str) -> BaseAdapter:
+                       config_dir: str, metadata_man: object) -> BaseAdapter:
         """
         Static method for creating and returning an adapter object.
         This is essentially an Adapter factory.
@@ -269,7 +269,7 @@ class AdapterManager:
         """
         cfg = AdapterManager.create_config_for_adapter(
             adapter_id, adapter_type, config_dir)
-        adapter = eval("{}({})".format(adapter_type, cfg))
+        adapter = eval("{}({}, {})".format(adapter_type, cfg, metadata_man))
         return adapter
 
     @staticmethod
@@ -493,7 +493,7 @@ class AdapterManager:
                 f"Could not find resource {r_id} in adapter {adapter_id}")
             try:
                 a = AdapterManager.create_adapter(
-                    adapter_type, adapter_id)
+                    adapter_type, adapter_id, self.metadata_man)
                 a.store(r_id)
                 found = True
             except AdapterCreationFailedException:

@@ -200,3 +200,24 @@ class SQLite3MetadataManager(object):
         sql = "select * from copies where resource_id = '{}' and canonical=1".format(
             r_id)
         return self.cursor.execute(sql).fetchall()
+
+
+    def get_copy_info(self, r_id: str, adapter_id: str, canonical: bool=False):
+        """
+        Get a summary of a copy of an object. Can be canonical or not.
+
+        :param r_id - object you want to learn about
+        :param adapter_id - adapter storing the copy
+        :canonical - True if you want to look for canonical copy
+        """
+        canonical = "1" if canonical == True else "0"
+        return self.cursor.execute(
+            "select * from copies where resource_id='{}' and adapter_identifier='{}' and canonical = {} limit 1".format(
+                r_id, adapter_id, canonical)).fetchall()
+
+    def delete_copy_metadata(copy_info):
+        self.cursor.execute("delete from copies where copy_id=?",
+                            [copy_info[0]])
+        self.conn.commit()
+
+
