@@ -195,7 +195,7 @@ class SQLite3MetadataManager(object):
                       canonical: bool = False):
         """
         Get a summary of a copy of an object. Can be canonical or not.
-        
+
         :param r_id - object you want to learn about
         :param adapter_id - adapter storing the copy
         :canonical - True if you want to look for canonical copy
