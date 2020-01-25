@@ -1,8 +1,6 @@
 import os
-from shutil import copyfile
 import hashlib
 import uuid
-import json
 from typing import List
 import logging
 
