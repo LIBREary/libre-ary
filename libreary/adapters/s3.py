@@ -91,6 +91,9 @@ class S3Adapter:
         except Exception as e:
             logger.error(f"Could not create AWS session")
             raise e
+        except ClientError as e:
+            logger.error(f"Could not create AWS session - Boto3 client failed.")
+            raise e
 
         self._create_bucket_if_nonexistent()
 
