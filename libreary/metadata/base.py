@@ -1,3 +1,5 @@
+from typing import List
+
 
 class BaseMetadataManager(object):
     """docstring for BaseMetadataManager
