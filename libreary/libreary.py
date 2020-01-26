@@ -246,3 +246,4 @@ class Libreary:
         """
         logger.debug(f"Adding new level: {name}")
         self.metadata_man.add_level(name, frequency, adapters, copies=1)
+        self.adapter_man.reload_levels_adapters()

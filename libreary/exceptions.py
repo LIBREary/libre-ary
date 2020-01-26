@@ -42,5 +42,5 @@ class AdapterRestored(Exception):
     pass
 
 
-class ConfigurationError:
+class ConfigurationError(Exception):
     pass
