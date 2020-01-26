@@ -226,3 +226,13 @@ class SQLite3MetadataManager(object):
             "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
             [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical])
         self.conn.commit()
+
+    def search(self, search_term: str):
+        """
+        Search the metadata db for information about resources.
+
+        :param search_term - a string with which to search against the metadata db.
+            Can match UUID, filename, original path, or description.
+        """
+        return self.cursor.execute(f"select * from resources where name like %?% or path like %?% or uuid like %?% or descripton like %?%",
+                                   (search_term, search_term, search_term, search_term)).fetchall()

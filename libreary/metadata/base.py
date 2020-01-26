@@ -59,5 +59,5 @@ class BaseMetadataManager(object):
                  sha1Hashed: str, adapter_type: str, canonical: bool = False):
         pass
 
-    def search(self, search_term:str) -> List[List[str]]:
+    def search(self, search_term: str) -> List[List[str]]:
         pass
