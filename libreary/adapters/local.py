@@ -133,7 +133,7 @@ class LocalAdapter:
         logger.debug(
             f"Retrieving object {r_id} from adapter {self.adapter_id}")
         try:
-            filename = self.self.metadata_man.get_resource_info(r_id)[0][3]
+            filename = self.metadata_man.get_resource_info(r_id)[0][3]
         except IndexError:
             logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException
