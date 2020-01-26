@@ -118,7 +118,7 @@ class SQLite3MetadataManager(object):
         This returns metadata that's kept in the `resources` table, not the `copies` table
         """
         return self.cursor.execute(
-            "select * from resources where uuid=?", (r_id,))
+            "select * from resources where uuid=?", (r_id,)).fetchall()
 
     def delete_resource(self, r_id: str) -> None:
         """
@@ -202,8 +202,8 @@ class SQLite3MetadataManager(object):
         """
         canonical = "1" if canonical else "0"
         return self.cursor.execute(
-            "select * from copies where resource_id='?' and adapter_identifier='?' and canonical=? limit 1", (
-                r_id, adapter_id, canonical) ).fetchall()
+            "select * from copies where resource_id=? and adapter_identifier=? and canonical=? limit 1", [
+                r_id, adapter_id, canonical] ).fetchall()
 
     def delete_copy_metadata(self, copy_id: str):
         """
@@ -223,8 +223,8 @@ class SQLite3MetadataManager(object):
 
         """
         self.cursor.execute(
-            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical])
+            "insert into copies values ( ?, ?, ?, ?, ?, ?, ?)",
+            [None, r_id, adapter_id, new_location, sha1Hashed, adapter_type, canonical])
         self.conn.commit()
 
     def search(self, search_term: str):

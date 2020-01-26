@@ -1,4 +1,6 @@
 from libreary import Libreary
+import libreary
+libreary.set_stream_logger()
 
 l = Libreary("/Users/ben/Desktop/libre-ary/example/config")
 levels_dict = [

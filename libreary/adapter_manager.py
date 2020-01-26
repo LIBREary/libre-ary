@@ -255,8 +255,7 @@ class AdapterManager:
 
         return r_val
 
-    @staticmethod
-    def create_adapter(adapter_type: str, adapter_id: str,
+    def create_adapter(self, adapter_type: str, adapter_id: str,
                        config_dir: str, metadata_man_config: dict) -> BaseAdapter:
         """
         Static method for creating and returning an adapter object.
