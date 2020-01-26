@@ -6,6 +6,8 @@ import logging
 
 from libreary.adapter_manager import AdapterManager
 from libreary.exceptions import ChecksumMismatchException
+from libreary.adapters import LocalAdapter
+from libreary.metadata import SQLite3MetadataManager
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +39,10 @@ class Ingester:
         ```
         """
         try:
+            self.config = config
             self.dropbox_dir = config["options"]["dropbox_dir"]
             self.canonical_adapter_id = config["canonical_adapter"]
-            self.canonical_adapter_type = config["canonical_adapter"]
+            self.canonical_adapter_type = config["canonical_adapter_type"]
             self.config_dir = config["options"]["config_dir"]
 
             self.metadata_man = metadata_man
@@ -66,7 +69,7 @@ class Ingester:
         checksum = sha1Hash.hexdigest()
 
         canonical_adapter = AdapterManager.create_adapter(
-            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.metadata_man)
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.config["metadata"])
 
         obj_uuid = str(uuid.uuid4())
 

@@ -194,7 +194,7 @@ class Libreary:
         :param search_term - a string with which to search against the metadata db.
             Can match UUID, filename, original path, or description.
         """
-        pass
+        return self.metadata_man.search(search_term)
 
     def check_single_resource(self, r_id: str, deep: bool = False) -> bool:
         """

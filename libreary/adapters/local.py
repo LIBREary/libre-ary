@@ -9,7 +9,7 @@ from libreary.exceptions import StorageFailedException, NoCopyExistsException
 logger = logging.getLogger(__name__)
 
 
-class LocalAdapter():
+class LocalAdapter:
     """
         An Adapter allows LIBREary to save copies of digital objects
             to different places across cyberspace. Working with many
@@ -78,7 +78,7 @@ class LocalAdapter():
         :param r_id - the resource to store's UUID
         """
         logger.debug(f"Storing object {r_id} to adapter {self.adapter_id}")
-        file_metadata = self.self.metadata_man.get_resource_info(r_id)[0]
+        file_metadata = self.metadata_man.get_resource_info(r_id)[0]
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(self.dropbox_dir, name)
@@ -133,7 +133,7 @@ class LocalAdapter():
         logger.debug(
             f"Retrieving object {r_id} from adapter {self.adapter_id}")
         try:
-            filename = self.self.metadata_man.get_resource_info(r_id)[0][3]
+            filename = self.metadata_man.get_resource_info(r_id)[0][3]
         except IndexError:
             logger.error(f"Cannot Retrieve object {r_id}. Not ingested.")
             raise ResourceNotIngestedException

@@ -58,3 +58,6 @@ class BaseMetadataManager(object):
     def add_copy(self, r_id: str, adapter_id: str, new_location: str,
                  sha1Hashed: str, adapter_type: str, canonical: bool = False):
         pass
+
+    def search(self, search_term: str) -> List[List[str]]:
+        pass

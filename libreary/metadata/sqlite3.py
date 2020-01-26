@@ -32,7 +32,7 @@ class SQLite3MetadataManager(object):
                 config.get("db_file"))
             self.conn = sqlite3.connect(self.metadata_db)
             self.cursor = self.conn.cursor()
-            self.type = self.config.get("manager_type")
+            self.type = config.get("manager_type")
             logger.debug(
                 "Metadata Manager Configuration Valid. Creating Metadata Manager")
         except KeyError:
@@ -118,7 +118,7 @@ class SQLite3MetadataManager(object):
         This returns metadata that's kept in the `resources` table, not the `copies` table
         """
         return self.cursor.execute(
-            "select * from resources where uuid=?", (r_id,))
+            "select * from resources where uuid=?", (r_id,)).fetchall()
 
     def delete_resource(self, r_id: str) -> None:
         """
@@ -202,8 +202,8 @@ class SQLite3MetadataManager(object):
         """
         canonical = "1" if canonical else "0"
         return self.cursor.execute(
-            "select * from copies where resource_id='?' and adapter_identifier='?' and canonical = ? limit 1", (
-                r_id, adapter_id, canonical)).fetchall()
+            "select * from copies where resource_id=? and adapter_identifier=? and canonical=? limit 1", [
+                r_id, adapter_id, canonical]).fetchall()
 
     def delete_copy_metadata(self, copy_id: str):
         """
@@ -223,6 +223,17 @@ class SQLite3MetadataManager(object):
 
         """
         self.cursor.execute(
-            "insert into copies values ( ?,?, ?, ?, ?, ?, ?)",
-            [None, r_id, self.adapter_id, new_location, sha1Hashed, self.adapter_type, canonical])
+            "insert into copies values ( ?, ?, ?, ?, ?, ?, ?)",
+            [None, r_id, adapter_id, new_location, sha1Hashed, adapter_type, canonical])
         self.conn.commit()
+
+    def search(self, search_term: str):
+        """
+        Search the metadata db for information about resources.
+
+        :param search_term - a string with which to search against the metadata db.
+            Can match UUID, filename, original path, or description.
+        """
+        search_term = "%" + search_term + "%"
+        return self.cursor.execute(f"select * from resources where name like ? or path like ? or uuid like ? or description like ?",
+                                   (search_term, search_term, search_term, search_term)).fetchall()
