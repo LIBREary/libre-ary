@@ -32,7 +32,7 @@ class SQLite3MetadataManager(object):
                 config.get("db_file"))
             self.conn = sqlite3.connect(self.metadata_db)
             self.cursor = self.conn.cursor()
-            self.type = self.config.get("manager_type")
+            self.type = config.get("manager_type")
             logger.debug(
                 "Metadata Manager Configuration Valid. Creating Metadata Manager")
         except KeyError:
@@ -202,8 +202,8 @@ class SQLite3MetadataManager(object):
         """
         canonical = "1" if canonical else "0"
         return self.cursor.execute(
-            "select * from copies where resource_id='?' and adapter_identifier='?' and canonical = ? limit 1", (
-                r_id, adapter_id, canonical)).fetchall()
+            "select * from copies where resource_id='?' and adapter_identifier='?' and canonical=? limit 1", (
+                r_id, adapter_id, canonical) ).fetchall()
 
     def delete_copy_metadata(self, copy_id: str):
         """
