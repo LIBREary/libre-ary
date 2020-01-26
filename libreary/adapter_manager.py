@@ -161,7 +161,7 @@ class AdapterManager:
         for level in self.levels.values():
             # Each level may need several adapters
             for adapter in level["adapters"]:
-                adapters[adapter["id"]] = self.create_adapter(
+                adapters[adapter["id"]] = AdapterManager.create_adapter(
                     adapter["type"], adapter["id"], self.config_dir, self.config["metadata"])
                 logger.debug(
                     f"Created adapter {adapter['id']} of type {adapter['type']}")
@@ -197,7 +197,7 @@ class AdapterManager:
         :param adapter_type - the type of the adapter you wish to create.
             Must be the actual class name, i.e. "LocalAdapter".
         """
-        adapter = self.create_adapter(
+        adapter = AdapterManager.create_adapter(
             adapter_type, adapter_id, self.config_dir, self.config["metadata"])
         self.adapters[adapter_id] = adapter
         logger.debug(
@@ -255,7 +255,8 @@ class AdapterManager:
 
         return r_val
 
-    def create_adapter(self, adapter_type: str, adapter_id: str,
+    @staticmethod
+    def create_adapter(adapter_type: str, adapter_id: str,
                        config_dir: str, metadata_man_config: dict) -> BaseAdapter:
         """
         Static method for creating and returning an adapter object.

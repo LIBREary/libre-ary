@@ -68,7 +68,7 @@ class Ingester:
         sha1Hash = hashlib.sha1(open(current_file_path, "rb").read())
         checksum = sha1Hash.hexdigest()
 
-        canonical_adapter = self.create_adapter(
+        canonical_adapter = AdapterManager.create_adapter(
             self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.config["metadata"])
 
         obj_uuid = str(uuid.uuid4())
@@ -95,47 +95,6 @@ class Ingester:
             os.remove(current_file_path)
 
         return obj_uuid
-
-    def create_adapter(self, adapter_type: str, adapter_id: str,
-                       config_dir: str, metadata_man_config: dict) -> object:
-        """
-        Static method for creating and returning an adapter object.
-        This is essentially an Adapter factory.
-
-        :param adapter_type - must be the name of a valid adapter class.
-        :param adapter_id - the identifier you want to label this adapter with
-        :param config_dir - configuration directory. Must contain a file called
-            `{adapter_id}_config.json`
-        """
-        cfg = AdapterManager.create_config_for_adapter(
-            adapter_id, adapter_type, config_dir)
-        adapter = eval("{}({}, SQLite3MetadataManager({}))".format(adapter_type, cfg, metadata_man_config))
-        return adapter
-
-    @staticmethod
-    def create_config_for_adapter(
-            adapter_id: str, adapter_type: str, config_dir: str) -> dict:
-        """
-        Static method for creating an adapter configuration. This is necessary for
-        the adapter factory.
-
-        :param adapter_type - must be the name of a valid adapter class.
-        :param adapter_id - the identifier you want to label this adapter with
-        :param config_dir - configuration directory. Must contain a file called
-            `{adapter_id}_config.json`
-        """
-        base_config = json.load(
-            open("{}/{}_config.json".format(config_dir, adapter_id)))
-        general_config = json.load(
-            open("{}/config.json".format(config_dir)))
-
-        full_adapter_conf = {}
-        full_adapter_conf["adapter"] = base_config["adapter"]
-        full_adapter_conf["adapter"]["adapter_type"] = adapter_type
-        full_adapter_conf["metadata"] = general_config["metadata"]
-        full_adapter_conf["options"] = general_config["options"]
-
-        return full_adapter_conf
 
     def verify_ingestion(self, r_id: str) -> bool:
         """

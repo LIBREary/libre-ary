@@ -203,7 +203,7 @@ class SQLite3MetadataManager(object):
         canonical = "1" if canonical else "0"
         return self.cursor.execute(
             "select * from copies where resource_id=? and adapter_identifier=? and canonical=? limit 1", [
-                r_id, adapter_id, canonical] ).fetchall()
+                r_id, adapter_id, canonical]).fetchall()
 
     def delete_copy_metadata(self, copy_id: str):
         """
