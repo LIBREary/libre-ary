@@ -1,6 +1,6 @@
 {
         "metadata": {
-            "db_file": "/Users/ben/desktop/libre-ary/example/md_index.db"
+            "db_file": "/Users/glick/desktop/libre-ary/example/md_index.db"
         },
         "adapter": {
             "storage_dir": "~/Desktop/librelocal",

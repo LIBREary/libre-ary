@@ -224,7 +224,7 @@ class GoogleDriveAdapter():
         new_name = "{}_{}".format(r_id, name)
 
         other_copies = self.metadata_man.get_copy_info(
-            r_id, self.adapter_id, canonical=False)
+            r_id, self.adapter_id)
 
         if len(other_copies) != 0:
             logger.debug(
@@ -269,7 +269,7 @@ class GoogleDriveAdapter():
             raise ResourceNotIngestedException
         try:
             copy_info = self.metadata_man.get_copy_info(
-                r_id, self.adapter_id, canonical=False)[0]
+                r_id, self.adapter_id)[0]
         except IndexError:
             logger.error(
                 f"Tried to retrieve a nonexistent copy of {r_id} from {self.adapter_id}")
@@ -336,8 +336,8 @@ class GoogleDriveAdapter():
         sha1Hash = hashlib.sha1(open(current_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
-        other_copies = self.metadata_man.get_copy_info(
-            r_id, self.adapter_id, canonical=True)
+        other_copies = self.metadata_man.get_canonical_copy_metadata(
+            r_id)
         if len(other_copies) != 0:
             logger.error(
                 f"Other canonical copies of {r_id} from {self.adapter_id} exist")
@@ -369,7 +369,7 @@ class GoogleDriveAdapter():
         logger.debug(f"Deleting copy of object {r_id} from {self.adapter_id}")
 
         copy_info = self.metadata_man.get_copy_info(
-            r_id, self.adapter_id, canonical=False)
+            r_id, self.adapter_id)
 
         if len(copy_info) == 0:
             # We've already deleted, probably as part of another level
@@ -393,8 +393,8 @@ class GoogleDriveAdapter():
             f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
 
         try:
-            copy_info = self.metadata_man.get_copy_info(
-                r_id, self.adapter_id, canonical=True)[0]
+            copy_info = self.metadata_man.get_canonical_copy_metadata(
+                r_id)[0]
         except IndexError:
             logger.debug(
                 f"Canonical copy of {r_id} on {self.adapter_id} has already been deleted.")
