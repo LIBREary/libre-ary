@@ -161,7 +161,7 @@ class SQLite3MetadataManager(object):
         :param r_id - resource id of resource to update
         :param new_levels - list of names of new levels
         """
-        sql = "update resources set levels = '?' where uuid=?"
+        sql = "update resources set levels = ? where uuid=?"
         self.cursor.execute(sql, (r_id, ",".join([l for l in new_levels])))
         self.conn.commit()
 
@@ -177,7 +177,7 @@ class SQLite3MetadataManager(object):
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        sql = "select * from copies where resource_id = '?'"
+        sql = "select * from copies where resource_id = ?"
         return self.cursor.execute(sql, (r_id,)).fetchall()
 
     def get_canonical_copy_metadata(self, r_id: str) -> List[List[str]]:
@@ -187,23 +187,20 @@ class SQLite3MetadataManager(object):
 
         :param r_id - UUID of resource you'd like to learn about
         """
-        sql = "select * from copies where resource_id = '?' and canonical=1"
+        sql = "select * from copies where resource_id = ? and canonical=1"
         return self.cursor.execute(sql, (
             r_id,)).fetchall()
 
-    def get_copy_info(self, r_id: str, adapter_id: str,
-                      canonical: bool = False):
+    def get_copy_info(self, r_id: str, adapter_id: str):
         """
         Get a summary of a copy of an object. Can be canonical or not.
 
         :param r_id - object you want to learn about
         :param adapter_id - adapter storing the copy
-        :canonical - True if you want to look for canonical copy
         """
-        canonical = "1" if canonical else "0"
         return self.cursor.execute(
-            "select * from copies where resource_id=? and adapter_identifier=? and canonical=? limit 1", [
-                r_id, adapter_id, canonical]).fetchall()
+            "select * from copies where resource_id=? and adapter_identifier=?", [
+                r_id, adapter_id]).fetchall()
 
     def delete_copy_metadata(self, copy_id: str):
         """
