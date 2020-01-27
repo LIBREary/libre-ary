@@ -1,12 +1,12 @@
 {
         "metadata": {
-            "db_file": "/Users/ben/desktop/libre-ary/example/md_index.db"
+            "db_file": "/Users/glick/desktop/libre-ary/example/md_index.db"
         },
         "adapter": {
             "adapter_identifier": "drive",
             "adapter_type": "GoogleDriveAdapter",
-            "token_file":"/Users/ben/desktop/libre-ary/config/token.pickle",
-            "credentials_file": "/Users/ben/desktop/libre-ary/config/google_creds.json",
+            "token_file":"/Users/glick/desktop/libre-ary/config/token.pickle",
+            "credentials_file": "/Users/glick/desktop/libre-ary/config/google_creds.json",
             "folder_path":"LIBREary-storage-dir"
         },
         "options": {
