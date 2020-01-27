@@ -65,19 +65,16 @@ class SQLite3MetadataManager(object):
             ```
         :param copies - copies to store for each adapter. Currently, only 1 is supported
         """
-        try:
-            logger.debug(f"Adding level {name}")
-            str_adapters = json.dumps(adapters)
-            self.cursor.execute(
-                "insert into levels values (?, ?, ?, ?, ?)",
-                (None,
-                 name,
-                 frequency,
-                 str_adapters,
-                 copies))
-            self.conn.commit()
-        except Exception:
-            logger.debug(f"Level {name} already exists")
+        logger.debug(f"Adding level {name}")
+        str_adapters = json.dumps(adapters)
+        self.cursor.execute(
+            "insert into levels values (?, ?, ?, ?, ?)",
+            (None,
+             name,
+             frequency,
+             str_adapters,
+             copies))
+        self.conn.commit()
 
     def ingest_to_db(self, canonical_adapter_locator: str,
                      levels: List[str], filename: str, checksum: str, obj_uuid: str, description: str) -> None:
@@ -205,14 +202,15 @@ class SQLite3MetadataManager(object):
             "select * from copies where resource_id=? and adapter_identifier=?", [
                 r_id, adapter_id]).fetchall()
 
-    def delete_copy_metadata(self, copy_id: str):
+    def delete_copy_metadata(self, copy_id: int):
         """
         Delete object metadata for a single copy
 
         :param copy_id -  The copy id (not resource uuid) to delete
         """
+        print(copy_id)
         self.cursor.execute("delete from copies where copy_id=?",
-                            copy_id)
+                            (copy_id,))
         self.conn.commit()
 
     def add_copy(self, r_id: str, adapter_id: str, new_location: str,

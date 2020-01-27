@@ -274,8 +274,9 @@ class LocalAdapter:
         """
         logger.debug(
             f"Getting actual checksum of object {r_id} from adapter {self.adapter_id}")
-        copy_info = self.metadata_man.get_copy_info(
-            self, r_id, self.adapter_id, canonical=False)
+        copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id)
+        if len(copy_info) == 0:
+            raise NoCopyExistsException
         path = copy_info[3]
         hash_obj = hashlib.sha1(open(path, "rb").read())
         checksum = hash_obj.hexdigest()
