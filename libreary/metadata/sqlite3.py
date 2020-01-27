@@ -126,7 +126,7 @@ class SQLite3MetadataManager(object):
 
         :param r_id - the resource's uuid
         """
-        self.cursor.execute("delete from resources where id=?", (r_id,))
+        self.cursor.execute("delete from resources where uuid=?", (r_id,))
         self.conn.commit()
 
     def minimal_test_ingest(self, locator: str, real_checksum: str, r_id: str):

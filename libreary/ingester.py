@@ -138,6 +138,7 @@ class Ingester:
         try:
             checksum = canonical_adapter.get_actual_checksum(r_id)
         except NoCopyExistsException:
+            print("no copy, deleting")
             self.metadata_man.delete_resource(r_id)
             return
 
@@ -149,4 +150,5 @@ class Ingester:
             raise ChecksumMismatchException
 
         logger.debug(f"Deleting object {r_id} from resources database")
+        print("copy, deleting")
         self.metadata_man.delete_resource(r_id)
