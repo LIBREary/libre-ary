@@ -8,6 +8,7 @@ from libreary.adapter_manager import AdapterManager
 from libreary.exceptions import ChecksumMismatchException
 from libreary.adapters import LocalAdapter
 from libreary.metadata import SQLite3MetadataManager
+from libreary.exceptions import NoCopyExistsException
 
 logger = logging.getLogger(__name__)
 
@@ -125,12 +126,21 @@ class Ingester:
         :param r_id - the UUID of the resouce you're deleting
         """
 
-        resource_info = self.metadata_man.get_resource_info(r_id)
-        canonical_checksum = resource_info[4]
+        try:
+            resource_info = self.metadata_man.get_resource_info(r_id)
+            canonical_checksum = resource_info[4]
+        except IndexError:
+            logger.debug(f"Already deleted {r_id}")
 
         canonical_adapter = AdapterManager.create_adapter(
-            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.metadata_man)
-        checksum = canonical_adapter.get_actual_checksum(r_id)
+            self.canonical_adapter_type, self.canonical_adapter_id, self.config_dir, self.config["metadata"])
+
+        try:
+            checksum = canonical_adapter.get_actual_checksum(r_id)
+        except NoCopyExistsException:
+            print("no copy, deleting")
+            self.metadata_man.delete_resource(r_id)
+            return
 
         if checksum == canonical_checksum:
             logger.debug(f"Deleting canonical copy of object {r_id}")
@@ -140,4 +150,5 @@ class Ingester:
             raise ChecksumMismatchException
 
         logger.debug(f"Deleting object {r_id} from resources database")
+        print("copy, deleting")
         self.metadata_man.delete_resource(r_id)
