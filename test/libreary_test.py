@@ -43,5 +43,3 @@ def test_libreary_retrieve():
 def test_libreary_delete():
     obj_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"],"cat", delete_after_store=False)
     libreary.delete(obj_id)
-
-test_libreary_ingest()
