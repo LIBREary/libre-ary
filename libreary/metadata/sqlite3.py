@@ -65,16 +65,19 @@ class SQLite3MetadataManager(object):
             ```
         :param copies - copies to store for each adapter. Currently, only 1 is supported
         """
-        logger.debug(f"Adding level {name}")
-        str_adapters = json.dumps(adapters)
-        self.cursor.execute(
-            "insert into levels values (?, ?, ?, ?, ?)",
-            (None,
-             name,
-             frequency,
-             str_adapters,
-             copies))
-        self.conn.commit()
+        try:
+            logger.debug(f"Adding level {name}")
+            str_adapters = json.dumps(adapters)
+            self.cursor.execute(
+                "insert into levels values (?, ?, ?, ?, ?)",
+                (None,
+                 name,
+                 frequency,
+                 str_adapters,
+                 copies))
+            self.conn.commit()
+        except Exception:
+            logger.debug(f"Level {name} already exists")
 
     def ingest_to_db(self, canonical_adapter_locator: str,
                      levels: List[str], filename: str, checksum: str, obj_uuid: str, description: str) -> None:
