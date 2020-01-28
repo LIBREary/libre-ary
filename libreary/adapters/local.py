@@ -255,7 +255,7 @@ class LocalAdapter:
         logger.debug(
             f"Deleting canonical copy of object {r_id} from {self.adapter_id}")
         copy_info = self.metadata_man.get_canonical_copy_metadata(
-            r_id)
+            r_id)[0]
         copy_path = copy_info[3]
 
         os.remove(copy_path)
@@ -277,6 +277,7 @@ class LocalAdapter:
         copy_info = self.metadata_man.get_copy_info(r_id, self.adapter_id)
         if len(copy_info) == 0:
             raise NoCopyExistsException
+        copy_info = copy_info[0]
         path = copy_info[3]
         hash_obj = hashlib.sha1(open(path, "rb").read())
         checksum = hash_obj.hexdigest()

@@ -127,7 +127,7 @@ class Ingester:
         """
 
         try:
-            resource_info = self.metadata_man.get_resource_info(r_id)
+            resource_info = self.metadata_man.get_resource_info(r_id)[0]
             canonical_checksum = resource_info[4]
         except IndexError:
             logger.debug(f"Already deleted {r_id}")
