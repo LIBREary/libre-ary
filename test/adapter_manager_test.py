@@ -1,17 +1,30 @@
-import json
+import libreary
+from libreary import Libreary
 
-from libreary.adapter_manager import AdapterManager
-from libreary.config_parser import ConfigParser
+CONFIG_DIR = "/Users/glick/Desktop/libre-ary/example/config"
 
-CONFIG_DIR = "/Users/ben/Desktop/libre-ary/config"
+libreary.set_stream_logger()
+l = Libreary("/Users/glick/desktop/libre-ary/example/config")
+am = l.adapter_man
 
+def test_initial_levels():
+	num_initial_levels = len(am.metadata_man.get_levels())
+	assert len(am.levels.items()) == num_initial_levels
 
-config = json.load(
-        open("{}/{}".format(CONFIG_DIR, "adapter_manager_config.json")))
-am = AdapterManager(config)
+def test_level_add():
+	# requires at least one adapter to be set up already
+	am.set_additional_adapter("test_local5", "LocalAdapter")
+	am.metadata_man.add_level("test_low", 1, [{"id":"test_local5", "type":"LocalAdapter"}], copies=1)
+	am.reload_levels_adapters()
+	assert "test_low" in am.levels.keys()
+	# am.metadata_man.delete_level("test_low")
 
-# print(am.adapters)
-# print(am.send_resource_to_adapters("1277ccb6-051c-458d-9250-570b6e085d79"))
-# print(am.retrieve_by_preference("1277ccb6-051c-458d-9250-570b6e085d79"))
-# am.delete_resource_from_adapters("1277ccb6-051c-458d-9250-570b6e085d79") 
-print(am.restore_canonical_copy("1277ccb6-051c-458d-9250-570b6e085d79"))
+def test_add_adapters():
+	am.set_additional_adapter("test_local5", "LocalAdapter")
+	am.reload_levels_adapters()
+	assert "test_local5" in am.adapters.keys()
+
+def test_verify_adapters():
+	for adapter in am.adapters.keys():
+		assert am.verify_adapter(adapter) == True
+
