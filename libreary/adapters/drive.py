@@ -11,7 +11,7 @@ try:
     from google.auth.transport.requests import Request
     from apiclient.http import MediaFileUpload, MediaIoBaseDownload
 
-except ImportError as e:
+except ImportError:
     _google_enabled = False
 else:
     _google_enabled = True
