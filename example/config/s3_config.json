@@ -3,7 +3,7 @@
             "db_file": "/Users/glick/desktop/libre-ary/example/md_index.db"
         },
         "adapter": {
-            "bucket_name": "libreary-bucket",
+            "bucket_name": "libreary-bucket2",
             "adapter_identifier": "s3",
             "adapter_type": "S3Adapter",
             "region": "us-west-2",

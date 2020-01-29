@@ -5,8 +5,8 @@
         "adapter": {
             "adapter_identifier": "drive",
             "adapter_type": "GoogleDriveAdapter",
-            "token_file":"/Users/glick/desktop/libre-ary/config/token.pickle",
-            "credentials_file": "/Users/glick/desktop/libre-ary/config/google_creds.json",
+            "token_file":"/Users/glick/desktop/libre-ary/example/config/token.pickle",
+            "credentials_file": "/Users/glick/desktop/libre-ary/example/config/google_creds.json",
             "folder_path":"LIBREary-storage-dir"
         },
         "options": {
