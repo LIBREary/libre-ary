@@ -43,3 +43,10 @@ def test_libreary_retrieve():
 def test_libreary_delete():
     obj_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"],"cat", delete_after_store=False)
     libreary.delete(obj_id)
+
+def test_search():
+	o_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"], "Test File for Level System Design", delete_after_store=False)
+	search_results = libreary.search("Test File")
+	assert type(search_results) == list
+	assert len(search_results) >= 1
+	libreary.delete(o_id)

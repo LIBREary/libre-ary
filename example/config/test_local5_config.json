@@ -3,15 +3,13 @@
             "db_file": "/Users/glick/desktop/libre-ary/example/md_index.db"
         },
         "adapter": {
-            "bucket_name": "libreary-bucket2",
-            "adapter_identifier": "s3",
-            "adapter_type": "S3Adapter",
-            "region": "us-west-2",
-            "key_file":"/Users/glick/desktop/aws_keys.json"
+            "storage_dir": "~/Desktop/librelocal3",
+            "adapter_identifier": "test_local5",
+            "adapter_type": "LocalAdapter"
         },
         "options": {
             "dropbox_dir": "dropbox",
             "output_dir": "retrieval"
         },
-        "canonical":false
+        "canonical":true
     }
