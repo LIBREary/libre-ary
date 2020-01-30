@@ -6,7 +6,7 @@ from libreary import AdapterManager
 
 
 libreary.set_stream_logger()
-l = Libreary("/Users/glick/desktop/libre-ary/test/test_run_dir/config")
+l = Libreary("test_run_dir/config")
 am = l.adapter_man
 
 def test_initial_levels():
