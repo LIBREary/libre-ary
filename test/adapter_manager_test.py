@@ -32,5 +32,5 @@ def test_verify_adapters():
 
 def test_create_adapter():
     adapter = AdapterManager.create_adapter(
-                    "LocalAdapter", "test_local5", "/Users/glick/desktop/libre-ary/test/test_run_dir/config", am.config["metadata"])
+                    "LocalAdapter", "test_local5", "test_run_dir/config", am.config["metadata"])
     assert type(adapter) == LocalAdapter
