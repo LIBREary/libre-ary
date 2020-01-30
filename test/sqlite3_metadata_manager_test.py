@@ -6,10 +6,10 @@ import json
 libreary.set_stream_logger()
 
 config = {
-        "db_file": "/Users/glick/Desktop/libre-ary/test/test_run_dir/md_index.db"
+        "db_file": "test_run_dir/md_index.db"
         }
 
-db_conn = sqlite3.connect("/Users/glick/Desktop/libre-ary/test/test_run_dir/md_index.db")
+db_conn = sqlite3.connect("test_run_dir/md_index.db")
 cursor = db_conn.cursor()
 
 mm = SQLite3MetadataManager(config)

@@ -1,17 +1,17 @@
 {
         "metadata": {
-            "db_file": "/Users/glick/desktop/libre-ary/test/test_run_dir/md_index.db"
+            "db_file": "test_run_dir/md_index.db"
         },
         "adapter": {
             "bucket_name": "libreary-bucket2",
             "adapter_identifier": "s3",
             "adapter_type": "S3Adapter",
             "region": "us-west-2",
-            "key_file":"/Users/glick/desktop/libre-ary/test/test_run_dir/aws_keys.json"
+            "key_file":"test_run_dir/aws_keys.json"
         },
         "options": {
-            "dropbox_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/dropbox",
-            "output_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/retrieval"
+            "dropbox_dir": "test_run_dir/dropbox",
+            "output_dir": "test_run_dir/retrieval"
         },
         "canonical":false
     }

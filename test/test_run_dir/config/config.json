@@ -1,6 +1,6 @@
 {
     "metadata": {
-        "db_file": "/Users/glick/desktop/libre-ary/test/test_run_dir/md_index.db",
+        "db_file": "test_run_dir/md_index.db",
         "manager_type": "SQLite3MetadataManager"
     },
     "adapters":[{
@@ -16,9 +16,9 @@
     }
     ],
     "options": {
-        "dropbox_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/dropbox",
-        "output_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/retrieval",
-        "config_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/config"
+        "dropbox_dir": "test_run_dir/dropbox",
+        "output_dir": "test_run_dir/retrieval",
+        "config_dir": "test_run_dir/config"
     },
     "canonical_adapter":"local1",
     "canonical_adapter_type": "LocalAdapter"
