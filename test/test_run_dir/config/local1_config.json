@@ -1,0 +1,15 @@
+{
+        "metadata": {
+            "db_file": "test_run_dir/md_index.db"
+        },
+        "adapter": {
+            "storage_dir": "test_run_dir/librelocal",
+            "adapter_identifier": "local1",
+            "adapter_type": "LocalAdapter"
+        },
+        "options": {
+            "dropbox_dir": "test_run_dir/dropbox",
+            "output_dir": "test/test_run_dir/retrieval"
+        },
+        "canonical":true
+    }

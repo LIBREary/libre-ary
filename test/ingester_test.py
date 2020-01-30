@@ -5,12 +5,12 @@ from libreary import Libreary
 import libreary
 
 libreary.set_stream_logger()
-l = Libreary("/Users/glick/desktop/libre-ary/example/config")
+l = Libreary("test_run_dir/config")
 i = l.ingester
 
 
 def test_ingester_ingest_delete():
-    obj_uuid = i.ingest("/Users/glick/Desktop/grace.jpg", ["low"], "Test File for ingester tests")
+    obj_uuid = i.ingest("test_run_dir/dropbox/grace.jpg", ["low"], "Test File for ingester tests")
     assert type(obj_uuid) == str
     
     object_list = i.list_resources()

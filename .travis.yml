@@ -4,3 +4,6 @@ python:
 install: "pip3 install -r requirements.txt"
 script:
   - flake8 libreary
+  - python3 setup.py install
+  - cd test
+  - pytest *.py

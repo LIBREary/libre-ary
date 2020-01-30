@@ -4,10 +4,9 @@ from libreary.adapters.BaseAdapter import BaseAdapter
 from libreary.adapters.local import LocalAdapter
 from libreary import AdapterManager
 
-CONFIG_DIR = "/Users/glick/Desktop/libre-ary/example/config"
 
 libreary.set_stream_logger()
-l = Libreary("/Users/glick/desktop/libre-ary/example/config")
+l = Libreary("test_run_dir/config")
 am = l.adapter_man
 
 def test_initial_levels():
@@ -33,5 +32,5 @@ def test_verify_adapters():
 
 def test_create_adapter():
     adapter = AdapterManager.create_adapter(
-                    "LocalAdapter", "test_local5", CONFIG_DIR, am.config["metadata"])
+                    "LocalAdapter", "test_local5", "test_run_dir/config", am.config["metadata"])
     assert type(adapter) == LocalAdapter

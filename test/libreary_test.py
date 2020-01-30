@@ -1,6 +1,6 @@
 from libreary.libreary import Libreary
 
-libreary = Libreary("/Users/glick/desktop/libre-ary/example/config")
+libreary = Libreary("test_run_dir/config")
 
 def test_config():
 	assert type(libreary.config) == dict
@@ -20,13 +20,13 @@ def test_add_level():
 	assert libreary.add_level("low", "1", levels_dict, copies=1) == None
 
 def test_libreary_ingest():
-	obj_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"],
+	obj_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"],
                "cat", delete_after_store=False)
 	assert type(obj_id) == str
 	libreary.delete(obj_id)
 
 def test_libreary_metadata():
-	obj_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"],
+	obj_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"],
                "cat", delete_after_store=False)
 	metadata = libreary.metadata_man.get_resource_info(obj_id)
 	assert metadata[0][5] == obj_id
@@ -34,18 +34,18 @@ def test_libreary_metadata():
 	libreary.delete(obj_id)
 
 def test_libreary_retrieve():
-	obj_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"],
+	obj_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"],
                "cat", delete_after_store=False)
 	new_path = libreary.retrieve(obj_id)
-	assert new_path == "/Users/glick/Desktop/retrieval/grace.jpg"
+	assert new_path == "test_run_dir/retrieval/grace.jpg"
 	libreary.delete(obj_id)
 
 def test_libreary_delete():
-    obj_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"],"cat", delete_after_store=False)
+    obj_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"],"cat", delete_after_store=False)
     libreary.delete(obj_id)
 
 def test_search():
-	o_id = libreary.ingest("/Users/glick/Desktop/grace.jpg", ["low"], "Test File for Level System Design", delete_after_store=False)
+	o_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"], "Test File for Level System Design", delete_after_store=False)
 	search_results = libreary.search("Test File")
 	assert type(search_results) == list
 	assert len(search_results) >= 1
