@@ -1,0 +1,15 @@
+{
+        "metadata": {
+            "db_file": "/Users/glick/desktop/libre-ary/test/test_run_dir/md_index.db"
+        },
+        "adapter": {
+            "storage_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/librelocal2",
+            "adapter_identifier": "local2",
+            "adapter_type": "LocalAdapter"
+        },
+        "options": {
+            "dropbox_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/dropbox",
+            "output_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/retrieval"
+        },
+        "canonical":true
+    }

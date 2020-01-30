@@ -1,0 +1,25 @@
+{
+    "metadata": {
+        "db_file": "/Users/glick/desktop/libre-ary/test/test_run_dir/md_index.db",
+        "manager_type": "SQLite3MetadataManager"
+    },
+    "adapters":[{
+        "type":"LocalAdapter",
+        "id": "local2"
+    },{
+        "type":"LocalAdapter",
+        "id": "local1"
+    },
+    {
+        "type":"S3Adapter",
+        "id": "s3"
+    }
+    ],
+    "options": {
+        "dropbox_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/dropbox",
+        "output_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/retrieval",
+        "config_dir": "/Users/glick/desktop/libre-ary/test/test_run_dir/config"
+    },
+    "canonical_adapter":"local1",
+    "canonical_adapter_type": "LocalAdapter"
+}
