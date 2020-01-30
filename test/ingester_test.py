@@ -5,7 +5,7 @@ from libreary import Libreary
 import libreary
 
 libreary.set_stream_logger()
-l = Libreary("/Users/glick/desktop/libre-ary/example/config")
+l = Libreary("/Users/glick/desktop/libre-ary/test/test_run_dir/config")
 i = l.ingester
 
 

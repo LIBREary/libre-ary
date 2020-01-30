@@ -3,13 +3,9 @@ import libreary
 from libreary.adapter_manager import AdapterManager
 from libreary import Libreary
 
-CONFIG_DIR = "/Users/glick/Desktop/libre-ary/example/config"
-
-
-CONFIG_DIR = "/Users/glick/Desktop/libre-ary/example/config"
 
 libreary.set_stream_logger()
-l = Libreary("/Users/glick/desktop/libre-ary/example/config")
+l = Libreary("/Users/glick/desktop/libre-ary/test/test_run_dir/config")
 am = l.adapter_man
 
 

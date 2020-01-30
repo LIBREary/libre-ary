@@ -1,6 +1,6 @@
 from libreary.libreary import Libreary
 
-libreary = Libreary("/Users/glick/desktop/libre-ary/example/config")
+libreary = Libreary("/Users/glick/desktop/libre-ary/test/test_run_dir/config")
 
 def test_config():
 	assert type(libreary.config) == dict
