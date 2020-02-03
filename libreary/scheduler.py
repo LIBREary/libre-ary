@@ -6,6 +6,7 @@ from libreary import Libreary
 
 logger = logging.getLogger(__name__)
 
+
 class Scheduler:
     """
     The LIBREary scheduler is responsible for scheduling various kinds of checks of LIBREarys
@@ -23,9 +24,10 @@ class Scheduler:
 
     def __init__(self, config_dir: str):
         try:
-            self.crontab  = CronTab(user=True)
+            self.crontab = CronTab(user=True)
         except Exception as e:
-            logger.error(f"Could not create Libreary Scheduler. Exception: {e}")
+            logger.error(
+                f"Could not create Libreary Scheduler. Exception: {e}")
 
     def set_schedule(self, schedule: List[dict]):
         """
@@ -37,7 +39,7 @@ class Scheduler:
             "config_dir": "Path to config_directory",
             "levels_to_check": ["list of levels to check"],
             "other_commands":["line here", "line here"],
-            "timing": []     
+            "timing": []
         }
 
         :param schedule - list of dictionaries as described.
@@ -48,19 +50,19 @@ class Scheduler:
     def add_schedule_job(self, schedule_entry: dict):
         """
         Add a single job to the schedule.
-        
+
         ```{json}
         {
             "config_dir": "Path to config_directory",
             "levels_to_check": ["list of levels to check"],
             "other_commands":["line here", "line here"],
-            "timing": [""]    
+            "timing": [""]
         }
         """
+        timing = schedule_entry["timing"]
         command = self.build_single_python_command(schedule_entry)
         job = self.crontab.new(command=command)
         job.setall(" ".join(timing))
-
 
     def build_single_python_command(self, schedule_entry: dict):
         """
@@ -68,17 +70,17 @@ class Scheduler:
 
         :param schedule_entry - dictionary formatted as described below
 
-        Schedule entry format: 
+        Schedule entry format:
 
         ```{json}
         {
             "config_dir": "Path to config_directory",
             "levels_to_check": ["list of levels to check"],
-            "other_commands":["line here", "line here"],     
+            "other_commands":["line here", "line here"],
         }
         ```
         """
-        base_python_command = f"python3 -c from libreary import Libreary; l = Libreary('{config_dir}');"
+        base_python_command = f"python3 -c from libreary import Libreary; l = Libreary('{self.config_dir}');"
         for level in schedule_entry["levels_to_check"]:
             base_python_command += f"l.check_level('{level}');"
         base_python_command += ";".join(schedule_entry["other_commands"])
