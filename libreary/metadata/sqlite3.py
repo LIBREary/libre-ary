@@ -98,7 +98,7 @@ class SQLite3MetadataManager(object):
                 levels.remove(name)
             except IndexError:
                 continue
-            self.cursor.execute("update resources set levels=? where uuid=?", (levels, 5))
+            self.cursor.execute("update resources set levels=? where uuid=?", (levels, uuid))
 
     def ingest_to_db(self, canonical_adapter_locator: str,
                      levels: str, filename: str, checksum: str, obj_uuid: str, description: str) -> None:
