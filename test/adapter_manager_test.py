@@ -19,12 +19,14 @@ def test_level_add():
     am.metadata_man.add_level("test_low", 1, [{"id":"test_local5", "type":"LocalAdapter"}], copies=1)
     am.reload_levels_adapters()
     assert "test_low" in am.levels.keys()
-    # am.metadata_man.delete_level("test_low")
+    am.metadata_man.delete_level("test_low")
 
 def test_add_adapters():
     am.set_additional_adapter("test_local5", "LocalAdapter")
+    am.metadata_man.add_level("test_low", 1, [{"id":"test_local5", "type":"LocalAdapter"}], copies=1)
     am.reload_levels_adapters()
     assert "test_local5" in am.adapters.keys()
+    am.metadata_man.delete_level("test_low")
 
 def test_verify_adapters():
     for adapter in am.adapters.keys():

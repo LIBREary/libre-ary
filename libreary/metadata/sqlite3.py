@@ -85,9 +85,8 @@ class SQLite3MetadataManager(object):
         :param name - name of level to delete
         """
         logger.debug(f"Deleting level {name}")
-        str_adapters = json.dumps(adapters)
         self.cursor.execute(
-            "delete from levels where ",
+            "delete from levels where name=?",
             (name,))
         self.conn.commit()
         resources = self.list_resources()
