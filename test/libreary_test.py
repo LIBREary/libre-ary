@@ -18,7 +18,7 @@ def test_add_level():
 		}
 		]
 	assert libreary.add_level("low", "1", levels_dict, copies=1) == None
-	libreary.metadata_man.delete_level("test_low")
+	libreary.metadata_man.delete_level("low")
 
 def test_libreary_ingest():
 	obj_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"],
@@ -43,7 +43,7 @@ def test_libreary_retrieve():
 
 def test_libreary_delete():
     obj_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"],"cat", delete_after_store=False)
-    libreary.delete(obj_id)
+    libreary.delete(obj_id) 
 
 def test_search():
 	o_id = libreary.ingest("test_run_dir/dropbox/grace.jpg", ["low"], "Test File for Level System Design", delete_after_store=False)

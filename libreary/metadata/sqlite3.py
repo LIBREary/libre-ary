@@ -93,8 +93,11 @@ class SQLite3MetadataManager(object):
 
         for resource in resources:
             uuid = resource[5]
-            levels = resources[2].split(",")
-            levels.remove(name)
+            try:
+                levels = resources[2].split(",")
+                levels.remove(name)
+            except IndexError:
+                continue
             self.cursor.execute("update resources set levels=? where uuid=?", (levels, 5))
 
     def ingest_to_db(self, canonical_adapter_locator: str,
