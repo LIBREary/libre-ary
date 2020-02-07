@@ -76,8 +76,30 @@ class SQLite3MetadataManager(object):
              copies))
         self.conn.commit()
 
+    def delete_level(self, name: str) -> None:
+        """
+        Delete a level from the metadata database.
+
+        Deletes level, also deletes level from levels in resources
+
+        :param name - name of level to delete
+        """
+        logger.debug(f"Deleting level {name}")
+        str_adapters = json.dumps(adapters)
+        self.cursor.execute(
+            "delete from levels where ",
+            (name,))
+        self.conn.commit()
+        resources = self.list_resources()
+
+        for resource in resources:
+            uuid = resource[5]
+            levels = resources[2].split(",")
+            levels.remove(name)
+            self.cursor.execute("update resources set levels=? where uuid=?", (levels, 5))
+
     def ingest_to_db(self, canonical_adapter_locator: str,
-                     levels: List[str], filename: str, checksum: str, obj_uuid: str, description: str) -> None:
+                     levels: str, filename: str, checksum: str, obj_uuid: str, description: str) -> None:
         """
         Ingest an object's metadata to the metadata database.
 
