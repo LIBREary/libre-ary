@@ -247,3 +247,13 @@ class Libreary:
         logger.debug(f"Adding new level: {name}")
         self.metadata_man.add_level(name, frequency, adapters, copies=1)
         self.adapter_man.reload_levels_adapters()
+
+    def delete_level(self, level_name: str):
+        """
+        Delete a level from the metadata database.
+
+        :param level_name - name of the level to delete
+        """
+        logger.debug(f"Deleting Level {level_name}")
+        self.metadata_man.remove_level(level_name)
+        self.adapter_man.reload_levels_adapters()
