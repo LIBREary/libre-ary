@@ -329,11 +329,43 @@ class SQLite3MetadataManager(object):
         for field in metadata:
             self.set_object_metadata_field(r_id, field["field"], field["value"])
 
-    def delete_object_metadata():
-        pass
+    def delete_object_metadata(self, r_id: str) -> None:
+        """
+        Delete object metadata - remove all fields from the "object_metadata" table
 
-    def delete_object_metadata_field():
-        pass
+        :param r_id - orbect uuid for deletion
+        """
+        try: 
+            list_of_fields = self.list_object_metadata_schema(r_id)
+        except Exception:
+            raise ResourceNotIngestedException
+        for field in list_of_fields:
+            self.delete_object_metadata_field(r_id, field)
 
-    def delete_object_metadata_schema():
-        pass
+    def delete_object_metadata_field(self, r_id: str, field: str) -> None:
+        """
+        Delete object metadata - remove single fields from the "object_metadata" table
+
+        :param r_id - orbect uuid for deletion
+        :param field - field to delete
+        """
+        self.cursor.execute("delete from object_metadata where object_id=? and key=?", (r_id, field))
+        self.conn.commit()
+
+    def delete_object_metadata_schema(self, r_id: str):
+        """
+        Delete object metadata schema - remove entry from the "object_metadata_schema" table
+
+        :param r_id - orbect uuid for deletion
+        """
+        self.cursor.execute("delete from object_metadata_schema where object_id=?", (r_id,))
+        self.conn.commit()
+
+    def delete_object_metadata_entirely(self, r_id: str) -> None:
+        """
+        Delete object metadata schema and all associated metadata
+
+        :param r_id - orbect uuid for deletion
+        """
+        self.delete_object_metadata(r_id)
+        self.delete_object_metadata_schema(r_id)
