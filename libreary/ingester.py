@@ -56,7 +56,7 @@ class Ingester:
             raise e
 
     def ingest(self, current_file_path: str, levels: List[str],
-               description: str, delete_after_store: bool = False) -> str:
+               description: str, delete_after_store: bool = False, metadata_schema: List = [], metadata: List = []) -> str:
         """
         Ingest an object to LIBREary. This method:
         - Creates the canonical copy of the object
@@ -89,6 +89,12 @@ class Ingester:
             checksum,
             obj_uuid,
             description)
+
+        # Ingest file metadata:
+        if len(metadata_schema) == len(metadata) and len(metadata_schema) != 0:
+            self.metadata_man.set_object_metadata_schema(
+                obj_uuid, metadata_schema)
+            self.metadata_man.set_all_object_metadata(obj_uuid, metadata)
 
         # If file is not in dropbox, copy it there
 

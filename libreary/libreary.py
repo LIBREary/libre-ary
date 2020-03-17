@@ -117,7 +117,7 @@ class Libreary:
         logger.debug(f"Running check of all objects in LIBREary. Deep: {deep}")
 
     def ingest(self, current_file_path: str, levels: List[str],
-               description: str, delete_after_store: bool = False) -> str:
+               description: str, delete_after_store: bool = False, metadata_schema: List = [], metadata: List = []) -> str:
         """
         Ingest a new object to the LIBRE-ary. This:
             1. Creates an entry in the `resources` table in the metadata db
@@ -140,7 +140,9 @@ class Libreary:
             current_file_path,
             levels,
             description,
-            delete_after_store=False)
+            delete_after_store=False,
+            metadata_schema=metadata_schema,
+            metadata=metadata)
         self.adapter_man.send_resource_to_adapters(
             obj_id, delete_after_send=delete_after_store)
         logger.debug(
@@ -246,4 +248,14 @@ class Libreary:
         """
         logger.debug(f"Adding new level: {name}")
         self.metadata_man.add_level(name, frequency, adapters, copies=1)
+        self.adapter_man.reload_levels_adapters()
+
+    def delete_level(self, level_name: str):
+        """
+        Delete a level from the metadata database.
+
+        :param level_name - name of the level to delete
+        """
+        logger.debug(f"Deleting Level {level_name}")
+        self.metadata_man.remove_level(level_name)
         self.adapter_man.reload_levels_adapters()
