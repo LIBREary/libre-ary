@@ -260,12 +260,30 @@ class SQLite3MetadataManager(object):
         return self.cursor.execute(f"select * from resources where name like ? or path like ? or uuid like ? or description like ?",
                                    (search_term, search_term, search_term, search_term)).fetchall()
 
-    def list_object_metadata(r_id: str) -> List:
+    def list_object_metadata(self, r_id: str) -> List:
         """
         Get a list of all of the object metadata fields related to the object.
 
         These fields live in the "object_metadata_schema" table, and the related
             data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
         """
         text_fields = self.cursor.execute(f"select md_schema from object_metadata_schema where object_id=?", (r_id,))
         return json.loads(text_fields)
+
+    def set_object_metadata(self, r_id: str, md_schema: str) -> None:
+        """
+        insert a list of all of the object metadata fields related to the object.
+
+        These fields live in the "object_metadata_schema" table, and the related
+            data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
+        :param md_schema - list of field names and types
+        """
+        md_schema_text = json.dumps(md_schema)
+        self.cursor.execute(
+            "insert into object_metadata_schema values ( ?, ?, ?)",
+            [None, r_id, md_schema_text])
+        self.conn.commit()
