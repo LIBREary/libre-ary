@@ -140,8 +140,8 @@ class Libreary:
             current_file_path,
             levels,
             description,
-            delete_after_store=False, 
-            metadata_schema=metadata_schema, 
+            delete_after_store=False,
+            metadata_schema=metadata_schema,
             metadata=metadata)
         self.adapter_man.send_resource_to_adapters(
             obj_id, delete_after_send=delete_after_store)
