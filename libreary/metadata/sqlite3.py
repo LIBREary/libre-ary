@@ -260,7 +260,7 @@ class SQLite3MetadataManager(object):
         return self.cursor.execute(f"select * from resources where name like ? or path like ? or uuid like ? or description like ?",
                                    (search_term, search_term, search_term, search_term)).fetchall()
 
-    def list_object_metadata(self, r_id: str) -> List:
+    def list_object_metadata_schema(self, r_id: str) -> List:
         """
         Get a list of all of the object metadata fields related to the object.
 
@@ -290,7 +290,7 @@ class SQLite3MetadataManager(object):
 
     def set_object_metadata_field(self, r_id: str, field: str, value: str) -> None:
         """
-        insert a list of all of the object metadata fields related to the object.
+        Set a single metadata field.
 
         These fields live in the "object_metadata_schema" table, and the related
             data lives in the "object_metadata" table
@@ -299,7 +299,7 @@ class SQLite3MetadataManager(object):
         :param md_schema - list of field names and types
         """
         try: 
-            list_of_fields = self.list_object_metadata(r_id)
+            list_of_fields = self.list_object_metadata_schema(r_id)
         except Exception:
             raise ResourceNotIngestedException
 
@@ -311,4 +311,29 @@ class SQLite3MetadataManager(object):
             [None, r_id, field, value])
         self.conn.commit()
 
+    def set_all_object_metadata(self, r_id: str, meatadata: List[dict]) -> None:
+        """
+        Set all metadata fields.
 
+        These fields live in the "object_metadata_schema" table, and the related
+            data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
+        :param md_schema - list of field names and types
+        """
+        try: 
+            list_of_fields = self.list_object_metadata_schema(r_id)
+        except Exception:
+            raise ResourceNotIngestedException
+
+        for field in metadata:
+            self.set_object_metadata_field(r_id, field["field"], field["value"])
+
+    def delete_object_metadata():
+        pass
+
+    def delete_object_metadata_field():
+        pass
+
+    def delete_object_metadata_schema():
+        pass

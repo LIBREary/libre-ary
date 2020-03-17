@@ -56,7 +56,7 @@ class Ingester:
             raise e
 
     def ingest(self, current_file_path: str, levels: List[str],
-               description: str, delete_after_store: bool = False) -> str:
+               description: str, delete_after_store: bool = False, metadata_schema: List = [], metadata: List = []) -> str:
         """
         Ingest an object to LIBREary. This method:
         - Creates the canonical copy of the object

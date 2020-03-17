@@ -117,7 +117,7 @@ class Libreary:
         logger.debug(f"Running check of all objects in LIBREary. Deep: {deep}")
 
     def ingest(self, current_file_path: str, levels: List[str],
-               description: str, delete_after_store: bool = False) -> str:
+               description: str, delete_after_store: bool = False, metadata_schema: List = [], metadata: List = []) -> str:
         """
         Ingest a new object to the LIBRE-ary. This:
             1. Creates an entry in the `resources` table in the metadata db
