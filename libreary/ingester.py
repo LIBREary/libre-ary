@@ -90,6 +90,11 @@ class Ingester:
             obj_uuid,
             description)
 
+        # Ingest file metadata:
+        if len(metadata_schema) == len(metadata) and len(metadata_schema) != 0:
+            self.metadata_man.set_object_metadata_schema(obj_uuid, metadata_schema)
+            self.metadata_man.set_all_object_metadata(obj_uuid, metadata)
+
         # If file is not in dropbox, copy it there
 
         if delete_after_store:
