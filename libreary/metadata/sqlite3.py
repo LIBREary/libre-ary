@@ -4,6 +4,8 @@ import json
 from typing import List
 import logging
 
+from libreary.exceptions import ResourceNotIngestedException, NoSuchMetadataFieldExeption
+
 logger = logging.getLogger(__name__)
 
 
@@ -98,7 +100,8 @@ class SQLite3MetadataManager(object):
                 levels.remove(name)
             except IndexError:
                 continue
-            self.cursor.execute("update resources set levels=? where uuid=?", (levels, uuid))
+            self.cursor.execute(
+                "update resources set levels=? where uuid=?", (levels, uuid))
 
     def ingest_to_db(self, canonical_adapter_locator: str,
                      levels: str, filename: str, checksum: str, obj_uuid: str, description: str) -> None:
@@ -269,7 +272,8 @@ class SQLite3MetadataManager(object):
 
         :param r_id - object uuid for looking up
         """
-        text_fields = self.cursor.execute(f"select md_schema from object_metadata_schema where object_id=?", (r_id,))
+        text_fields = self.cursor.execute(
+            f"select md_schema from object_metadata_schema where object_id=?", (r_id,))
         return json.loads(text_fields)
 
     def set_object_metadata_schema(self, r_id: str, md_schema: str) -> None:
@@ -288,7 +292,8 @@ class SQLite3MetadataManager(object):
             [None, r_id, md_schema_text])
         self.conn.commit()
 
-    def set_object_metadata_field(self, r_id: str, field: str, value: str) -> None:
+    def set_object_metadata_field(
+            self, r_id: str, field: str, value: str) -> None:
         """
         Set a single metadata field.
 
@@ -298,7 +303,7 @@ class SQLite3MetadataManager(object):
         :param r_id - object uuid for looking up
         :param md_schema - list of field names and types
         """
-        try: 
+        try:
             list_of_fields = self.list_object_metadata_schema(r_id)
         except Exception:
             raise ResourceNotIngestedException
@@ -311,7 +316,8 @@ class SQLite3MetadataManager(object):
             [None, r_id, field, value])
         self.conn.commit()
 
-    def set_all_object_metadata(self, r_id: str, meatadata: List[dict]) -> None:
+    def set_all_object_metadata(
+            self, r_id: str, metadata: List[dict]) -> None:
         """
         Set all metadata fields.
 
@@ -321,13 +327,14 @@ class SQLite3MetadataManager(object):
         :param r_id - object uuid for looking up
         :param md_schema - list of field names and types
         """
-        try: 
-            list_of_fields = self.list_object_metadata_schema(r_id)
+        try:
+            self.list_object_metadata_schema(r_id)
         except Exception:
             raise ResourceNotIngestedException
 
         for field in metadata:
-            self.set_object_metadata_field(r_id, field["field"], field["value"])
+            self.set_object_metadata_field(
+                r_id, field["field"], field["value"])
 
     def delete_object_metadata(self, r_id: str) -> None:
         """
@@ -335,7 +342,7 @@ class SQLite3MetadataManager(object):
 
         :param r_id - orbect uuid for deletion
         """
-        try: 
+        try:
             list_of_fields = self.list_object_metadata_schema(r_id)
         except Exception:
             raise ResourceNotIngestedException
@@ -349,7 +356,8 @@ class SQLite3MetadataManager(object):
         :param r_id - orbect uuid for deletion
         :param field - field to delete
         """
-        self.cursor.execute("delete from object_metadata where object_id=? and key=?", (r_id, field))
+        self.cursor.execute(
+            "delete from object_metadata where object_id=? and key=?", (r_id, field))
         self.conn.commit()
 
     def delete_object_metadata_schema(self, r_id: str):
@@ -358,7 +366,8 @@ class SQLite3MetadataManager(object):
 
         :param r_id - orbect uuid for deletion
         """
-        self.cursor.execute("delete from object_metadata_schema where object_id=?", (r_id,))
+        self.cursor.execute(
+            "delete from object_metadata_schema where object_id=?", (r_id,))
         self.conn.commit()
 
     def delete_object_metadata_entirely(self, r_id: str) -> None:
