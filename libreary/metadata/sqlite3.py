@@ -273,7 +273,7 @@ class SQLite3MetadataManager(object):
         :param r_id - object uuid for looking up
         """
         text_fields = self.cursor.execute(
-            f"select md_schema from object_metadata_schema where object_id=?", (r_id,))
+            f"select md_schema from object_metadata_schema where object_id=?", (r_id,)).fetchall()[0][0]
         return json.loads(text_fields)
 
     def set_object_metadata_schema(self, r_id: str, md_schema: str) -> None:
@@ -312,7 +312,7 @@ class SQLite3MetadataManager(object):
             raise NoSuchMetadataFieldExeption
 
         self.cursor.execute(
-            "insert into object_metadata_schema values ( ?, ?, ?, ?)",
+            "insert into object_metadata values ( ?, ?, ?, ?)",
             [None, r_id, field, value])
         self.conn.commit()
 
