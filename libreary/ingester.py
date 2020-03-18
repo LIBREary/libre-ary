@@ -148,5 +148,4 @@ class Ingester:
             raise ChecksumMismatchException
 
         logger.debug(f"Deleting object {r_id} from resources database")
-        print("copy, deleting")
         self.metadata_man.delete_resource(r_id)
