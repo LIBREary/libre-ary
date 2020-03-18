@@ -4,6 +4,8 @@ import json
 from typing import List
 import logging
 
+from libreary.exceptions import ResourceNotIngestedException, NoSuchMetadataFieldExeption
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,18 +87,21 @@ class SQLite3MetadataManager(object):
         :param name - name of level to delete
         """
         logger.debug(f"Deleting level {name}")
-        str_adapters = json.dumps(adapters)
         self.cursor.execute(
-            "delete from levels where ",
+            "delete from levels where name=?",
             (name,))
         self.conn.commit()
         resources = self.list_resources()
 
         for resource in resources:
             uuid = resource[5]
-            levels = resources[2].split(",")
-            levels.remove(name)
-            self.cursor.execute("update resources set levels=? where uuid=?", (levels, 5))
+            try:
+                levels = resources[2].split(",")
+                levels.remove(name)
+            except IndexError:
+                continue
+            self.cursor.execute(
+                "update resources set levels=? where uuid=?", (levels, uuid))
 
     def ingest_to_db(self, canonical_adapter_locator: str,
                      levels: str, filename: str, checksum: str, obj_uuid: str, description: str) -> None:
@@ -257,3 +262,119 @@ class SQLite3MetadataManager(object):
         search_term = "%" + search_term + "%"
         return self.cursor.execute(f"select * from resources where name like ? or path like ? or uuid like ? or description like ?",
                                    (search_term, search_term, search_term, search_term)).fetchall()
+
+    def list_object_metadata_schema(self, r_id: str) -> List:
+        """
+        Get a list of all of the object metadata fields related to the object.
+
+        These fields live in the "object_metadata_schema" table, and the related
+            data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
+        """
+        text_fields = self.cursor.execute(
+            f"select md_schema from object_metadata_schema where object_id=?", (r_id,))
+        return json.loads(text_fields)
+
+    def set_object_metadata_schema(self, r_id: str, md_schema: str) -> None:
+        """
+        insert a list of all of the object metadata fields related to the object.
+
+        These fields live in the "object_metadata_schema" table, and the related
+            data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
+        :param md_schema - list of field names and types
+        """
+        md_schema_text = json.dumps(md_schema)
+        self.cursor.execute(
+            "insert into object_metadata_schema values ( ?, ?, ?)",
+            [None, r_id, md_schema_text])
+        self.conn.commit()
+
+    def set_object_metadata_field(
+            self, r_id: str, field: str, value: str) -> None:
+        """
+        Set a single metadata field.
+
+        These fields live in the "object_metadata_schema" table, and the related
+            data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
+        :param md_schema - list of field names and types
+        """
+        try:
+            list_of_fields = self.list_object_metadata_schema(r_id)
+        except Exception:
+            raise ResourceNotIngestedException
+
+        if field not in list_of_fields:
+            raise NoSuchMetadataFieldExeption
+
+        self.cursor.execute(
+            "insert into object_metadata_schema values ( ?, ?, ?, ?)",
+            [None, r_id, field, value])
+        self.conn.commit()
+
+    def set_all_object_metadata(
+            self, r_id: str, metadata: List[dict]) -> None:
+        """
+        Set all metadata fields.
+
+        These fields live in the "object_metadata_schema" table, and the related
+            data lives in the "object_metadata" table
+
+        :param r_id - object uuid for looking up
+        :param md_schema - list of field names and types
+        """
+        try:
+            self.list_object_metadata_schema(r_id)
+        except Exception:
+            raise ResourceNotIngestedException
+
+        for field in metadata:
+            self.set_object_metadata_field(
+                r_id, field["field"], field["value"])
+
+    def delete_object_metadata(self, r_id: str) -> None:
+        """
+        Delete object metadata - remove all fields from the "object_metadata" table
+
+        :param r_id - orbect uuid for deletion
+        """
+        try:
+            list_of_fields = self.list_object_metadata_schema(r_id)
+        except Exception:
+            raise ResourceNotIngestedException
+        for field in list_of_fields:
+            self.delete_object_metadata_field(r_id, field)
+
+    def delete_object_metadata_field(self, r_id: str, field: str) -> None:
+        """
+        Delete object metadata - remove single fields from the "object_metadata" table
+
+        :param r_id - orbect uuid for deletion
+        :param field - field to delete
+        """
+        self.cursor.execute(
+            "delete from object_metadata where object_id=? and key=?", (r_id, field))
+        self.conn.commit()
+
+    def delete_object_metadata_schema(self, r_id: str):
+        """
+        Delete object metadata schema - remove entry from the "object_metadata_schema" table
+
+        :param r_id - orbect uuid for deletion
+        """
+        self.cursor.execute(
+            "delete from object_metadata_schema where object_id=?", (r_id,))
+        self.conn.commit()
+
+    def delete_object_metadata_entirely(self, r_id: str) -> None:
+        """
+        Delete object metadata schema and all associated metadata
+
+        :param r_id - orbect uuid for deletion
+        """
+        self.delete_object_metadata(r_id)
+        self.delete_object_metadata_schema(r_id)

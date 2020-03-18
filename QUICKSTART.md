@@ -5,7 +5,7 @@ This document is designed to help you with set up your first LIBRE-ary. We'll co
 
 Installation
 ------------------
-LIBRE-ary requires Python 3. I think any version after 3.4 should work fine, but it's only tested on python 3.6+.
+LIBRE-ary requires Python 3. I think any version after 3.6 should work fine, but it's only tested on python 3.6. LIBRE-ary contains F-strings, which are only supported starting in py36.
 
 You can install LIBRE-ary two ways: from source, or from `pip`
 

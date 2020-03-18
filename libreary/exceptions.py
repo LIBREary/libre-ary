@@ -44,3 +44,7 @@ class AdapterRestored(Exception):
 
 class ConfigurationError(Exception):
     pass
+
+
+class NoSuchMetadataFieldExeption(Exception):
+    pass

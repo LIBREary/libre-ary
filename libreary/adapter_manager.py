@@ -269,7 +269,9 @@ class AdapterManager:
         """
         cfg = AdapterManager.create_config_for_adapter(
             adapter_id, adapter_type, config_dir)
-        adapter = eval("{}({}, SQLite3MetadataManager({}))".format(adapter_type, cfg, metadata_man_config))
+        adapter = eval(
+            "{}({}, SQLite3MetadataManager({}))".format(
+                adapter_type, cfg, metadata_man_config))
         return adapter
 
     @staticmethod

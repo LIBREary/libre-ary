@@ -24,6 +24,7 @@ def test_metadata_add_level():
     init_levels = len(mm.get_levels())
     mm.add_level("test", "2", a, copies=1)
     assert len(mm.get_levels()) == init_levels + 1
+    mm.delete_level("test")
 
 """
 def test_metadata_delete_level():
