@@ -331,11 +331,10 @@ class GoogleDriveAdapter():
         logger.debug(
             f"Storing canonical copy of object {r_id} to {self.adapter_id}")
 
-        new_name = "{}_{}".format(r_id, filename)
+        new_name = "canonical_{}_{}".format(r_id, filename)
 
         sha1Hash = hashlib.sha1(open(current_path, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
-
         other_copies = self.metadata_man.get_canonical_copy_metadata(
             r_id)
         if len(other_copies) != 0:

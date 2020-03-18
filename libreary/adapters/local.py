@@ -93,7 +93,7 @@ class LocalAdapter:
             os.makedirs(new_dir)
 
         if os.path.isfile(new_location):
-            new_location = "{}_{}".format(new_location, r_id)
+            new_location = "{}_{}_{}".format("/".join(new_location.split('/')[:-1]), name, r_id)
 
         other_copies = self.metadata_man.get_copy_info(
             r_id, self.adapter_id)
@@ -187,7 +187,7 @@ class LocalAdapter:
             f"Storing canonical copy of object {r_id} to {self.adapter_id}")
         current_location = current_path
         new_location = os.path.expanduser(
-            "{}/{}_canonical".format(self.storage_dir, filename))
+            "{}/canonical_{}".format(self.storage_dir, filename))
         new_dir = os.path.expanduser("/".join(new_location.split("/")[:-1]))
 
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
