@@ -178,7 +178,7 @@ class Libreary:
         logger.debug(f"Deleting object {r_id}")
 
         # Delete metadata only if object has metadata
-        if len(self.metadata_man.list_object_metadata_schema()) > 0:
+        if len(self.metadata_man.list_object_metadata_schema(r_id)) > 0:
             self.metadata_man.delete_object_metadata_entirely(r_id)
 
         self.adapter_man.delete_resource_from_adapters(r_id)

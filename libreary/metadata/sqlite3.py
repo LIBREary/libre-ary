@@ -100,6 +100,8 @@ class SQLite3MetadataManager(object):
                 levels.remove(name)
             except IndexError:
                 continue
+            except ValueError:
+                continue
             self.cursor.execute(
                 "update resources set levels=? where uuid=?", (levels, uuid))
 
