@@ -193,7 +193,7 @@ class S3Adapter:
             return
 
         if sha1Hashed == checksum:
-            locator = '{}_{}'.format(name, r_id)
+            locator = '{}_{}'.format(r_id, name)
             self.s3.Bucket(
                 self.bucket_name).upload_file(
                 current_location,
@@ -232,7 +232,7 @@ class S3Adapter:
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
 
-        locator = "{}_{}_canonical".format(filename, r_id)
+        locator = "canonical_{}_{}".format(r_id, filename)
 
         other_copies = self.metadata_man.get_canonical_copy_metadata(
             r_id)
