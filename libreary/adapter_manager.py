@@ -6,6 +6,7 @@ import hashlib
 import shutil
 from typing import List
 import logging
+import ast
 
 from libreary.adapters.BaseAdapter import BaseAdapter
 from libreary.adapters.local import LocalAdapter
@@ -16,6 +17,15 @@ from libreary.exceptions import RestorationFailedException, AdapterCreationFaile
 from libreary.metadata import SQLite3MetadataManager
 
 logger = logging.getLogger(__name__)
+
+adapters_translate_table = {
+                            "LocalAdapter": LocalAdapter,
+                            "S3Adapter": S3Adapter,
+                            "GoogleDriveAdapter": GoogleDriveAdapter,
+                            }
+metadata_man_translate_table = {
+                                "SQLite3MetadataManager": SQLite3MetadataManager,
+}
 
 
 class AdapterManager:
@@ -257,7 +267,7 @@ class AdapterManager:
 
     @staticmethod
     def create_adapter(adapter_type: str, adapter_id: str,
-                       config_dir: str, metadata_man_config: dict) -> BaseAdapter:
+                       config_dir: str, metadata_man_config: dict, metadata_man_type="SQLite3MetadataManager") -> BaseAdapter:
         """
         Static method for creating and returning an adapter object.
         This is essentially an Adapter factory.
@@ -269,9 +279,8 @@ class AdapterManager:
         """
         cfg = AdapterManager.create_config_for_adapter(
             adapter_id, adapter_type, config_dir)
-        adapter = eval(
-            "{}({}, SQLite3MetadataManager({}))".format(
-                adapter_type, cfg, metadata_man_config))
+        adapter = adapters_translate_table[adapter_type](ast.literal_eval(f"{cfg}"), metadata_man_translate_table[metadata_man_type](ast.literal_eval(f"{metadata_man_config}")))
+
         return adapter
 
     @staticmethod
