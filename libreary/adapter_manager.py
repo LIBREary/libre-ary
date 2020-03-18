@@ -19,12 +19,12 @@ from libreary.metadata import SQLite3MetadataManager
 logger = logging.getLogger(__name__)
 
 adapters_translate_table = {
-                            "LocalAdapter": LocalAdapter,
-                            "S3Adapter": S3Adapter,
-                            "GoogleDriveAdapter": GoogleDriveAdapter,
-                            }
+    "LocalAdapter": LocalAdapter,
+    "S3Adapter": S3Adapter,
+    "GoogleDriveAdapter": GoogleDriveAdapter,
+}
 metadata_man_translate_table = {
-                                "SQLite3MetadataManager": SQLite3MetadataManager,
+    "SQLite3MetadataManager": SQLite3MetadataManager,
 }
 
 
@@ -279,7 +279,10 @@ class AdapterManager:
         """
         cfg = AdapterManager.create_config_for_adapter(
             adapter_id, adapter_type, config_dir)
-        adapter = adapters_translate_table[adapter_type](ast.literal_eval(f"{cfg}"), metadata_man_translate_table[metadata_man_type](ast.literal_eval(f"{metadata_man_config}")))
+        adapter = adapters_translate_table[adapter_type](
+            ast.literal_eval(f"{cfg}"),
+            metadata_man_translate_table[metadata_man_type](
+                ast.literal_eval(f"{metadata_man_config}")))
 
         return adapter
 
