@@ -96,7 +96,7 @@ class SQLite3MetadataManager(object):
         for resource in resources:
             uuid = resource[5]
             try:
-                levels = resources[2].split(",")
+                levels = resource[2].split(",")
                 levels.remove(name)
             except IndexError:
                 continue
@@ -272,9 +272,12 @@ class SQLite3MetadataManager(object):
 
         :param r_id - object uuid for looking up
         """
-        text_fields = self.cursor.execute(
-            f"select md_schema from object_metadata_schema where object_id=?", (r_id,)).fetchall()[0][0]
-        return json.loads(text_fields)
+        try:
+            text_fields = self.cursor.execute(
+                f"select md_schema from object_metadata_schema where object_id=?", (r_id,)).fetchall()[0][0]
+            return json.loads(text_fields)
+        except IndexError as e:
+            return []
 
     def set_object_metadata_schema(self, r_id: str, md_schema: str) -> None:
         """

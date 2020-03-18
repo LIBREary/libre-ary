@@ -91,3 +91,7 @@ def test_libreary_ingest_metadata():
     libreary.delete(obj_id)
     libreary.metadata_man.delete_level("low")
 
+if __name__ == '__main__':
+
+    test_libreary_ingest_metadata()
+
