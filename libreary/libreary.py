@@ -117,7 +117,7 @@ class Libreary:
         logger.debug(f"Running check of all objects in LIBREary. Deep: {deep}")
 
     def ingest(self, current_file_path: str, levels: List[str],
-               description: str, delete_after_store: bool = False, metadata_schema: List = [], metadata: List = []) -> str:
+               description: str, delete_after_store: bool = False, metadata_schema: List[str] = [], metadata: List[dict] = []) -> str:
         """
         Ingest a new object to the LIBRE-ary. This:
             1. Creates an entry in the `resources` table in the metadata db
@@ -132,6 +132,10 @@ class Libreary:
         :param description - a description of this object. This is useful when you
             want to search for objects later
         :param delete_after_store - Boolean. If True, the Ingester will delete the object after it's stored.
+        :param metadata_schema - list of names of metadata fields to be associated with object
+        :param metadata - values of the fields in the metadata schema. Structured like this:
+            [{"field": "collection", "value": "cats"},
+             {"field": "owner", "value": "ben glick"}]
         """
 
         # Don't want ingester to delete it, because then AM will need to
