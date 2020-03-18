@@ -279,7 +279,7 @@ class SQLite3MetadataManager(object):
             text_fields = self.cursor.execute(
                 f"select md_schema from object_metadata_schema where object_id=?", (r_id,)).fetchall()[0][0]
             return json.loads(text_fields)
-        except IndexError as e:
+        except IndexError:
             return []
 
     def set_object_metadata_schema(self, r_id: str, md_schema: str) -> None:
