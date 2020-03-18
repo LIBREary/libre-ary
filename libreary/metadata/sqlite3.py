@@ -102,8 +102,9 @@ class SQLite3MetadataManager(object):
                 continue
             except ValueError:
                 continue
+            print(levels)
             self.cursor.execute(
-                "update resources set levels=? where uuid=?", (levels, uuid))
+                "update resources set levels=? where uuid=?", (json.dumps(levels), str(uuid)))
 
     def ingest_to_db(self, canonical_adapter_locator: str,
                      levels: str, filename: str, checksum: str, obj_uuid: str, description: str) -> None:
