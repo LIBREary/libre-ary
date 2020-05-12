@@ -1,4 +1,4 @@
-class BaseAdapter:
+class AbstractAdapter:
     """
     Class definition for the base adapter for libre-ary resource adapters.
 
