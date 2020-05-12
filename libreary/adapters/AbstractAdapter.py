@@ -94,3 +94,26 @@ class AbstractAdapter:
         If possible, this should be done with no file I/O
         """
         pass
+
+    @AbstractMethod
+    def prepare_upload(file_metadata, dropbox_dir, current_location, ):
+
+        
+        checksum = file_metadata[4]
+        name = file_metadata[3]
+        current_location = "{}/{}".format(dropbox_dir, name)
+
+        sha1Hash = hashlib.sha1(open(current_location, "rb").read())
+        sha1Hashed = sha1Hash.hexdigest()
+
+        new_name = "{}_{}".format(r_id, name)
+
+        other_copies = self.metadata_man.get_copy_info(
+            r_id, self.adapter_id)
+
+        if len(other_copies) != 0:
+            logger.debug(
+                f"Other copies of {r_id} from {self.adapter_id} exist")
+            return "OtherCopies"
+
+        return checksum, sha1Hashed
