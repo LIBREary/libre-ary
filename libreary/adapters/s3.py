@@ -89,10 +89,10 @@ class S3Adapter:
         try:
             self.initialize_boto_client()
         except Exception as e:
-            logger.error(f"Could not create AWS session")
+            logger.error("Could not create AWS session")
             raise e
         except ClientError as e:
-            logger.error(f"Could not create AWS session - Boto3 client failed.")
+            logger.error("Could not create AWS session - Boto3 client failed.")
             raise e
 
         self._create_bucket_if_nonexistent()
@@ -133,11 +133,11 @@ class S3Adapter:
                 with open(credfile, 'r') as f:
                     creds = json.load(f)
             except json.JSONDecodeError as e:
-                logger.error(f"Could not create AWS session")
+                logger.error("Could not create AWS session")
                 raise e
 
             except Exception as e:
-                logger.error(f"Could not create AWS session")
+                logger.error("Could not create AWS session")
                 raise e
 
             session = boto3.session.Session(region_name=self.region, **creds)
@@ -147,7 +147,7 @@ class S3Adapter:
             )
         else:
             session = boto3.session.Session(region_name=self.region)
-        logger.error(f"Created AWS session")
+        logger.error("Created AWS session")
         return session
 
     def _create_bucket_if_nonexistent(self) -> None:

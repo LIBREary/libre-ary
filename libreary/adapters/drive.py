@@ -140,7 +140,7 @@ class GoogleDriveAdapter():
         """
         Sanity-check method for devs to use. Lists top 1000 items in drive
         """
-        logger.debug(f"Testing drive connection")
+        logger.debug("Testing drive connection")
         results = self.service.files().list(
             pageSize=1000, fields="nextPageToken, files(id, name)").execute()
         items = results.get('files', [])
