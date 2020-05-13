@@ -8,7 +8,7 @@ from typing import List
 import logging
 import ast
 
-from libreary.adapters.BaseAdapter import BaseAdapter
+from libreary.adapters.AbstractAdapter import AbstractAdapter
 from libreary.adapters.local import LocalAdapter
 from libreary.adapters.s3 import S3Adapter
 from libreary.adapters.drive import GoogleDriveAdapter
@@ -197,7 +197,7 @@ class AdapterManager:
         self.adapters = self.get_all_adapters()
 
     def set_additional_adapter(self, adapter_id: str,
-                               adapter_type: str) -> BaseAdapter:
+                               adapter_type: str) -> AbstractAdapter:
         """
         Manually add an adapter to the pool of adapters.
 
@@ -267,7 +267,7 @@ class AdapterManager:
 
     @staticmethod
     def create_adapter(adapter_type: str, adapter_id: str,
-                       config_dir: str, metadata_man_config: dict, metadata_man_type="SQLite3MetadataManager") -> BaseAdapter:
+                       config_dir: str, metadata_man_config: dict, metadata_man_type="SQLite3MetadataManager") -> AbstractAdapter:
         """
         Static method for creating and returning an adapter object.
         This is essentially an Adapter factory.
@@ -366,7 +366,7 @@ class AdapterManager:
             logger.debug(f"Deleting object {r_id} after send")
             os.remove(expected_location)
 
-    def get_adapters_by_level(self, level: str) -> List[BaseAdapter]:
+    def get_adapters_by_level(self, level: str) -> List[AbstractAdapter]:
         """
         Get a list of adapter objects based on a level.
         Returns a list of callable adapter objects.

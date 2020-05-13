@@ -1,3 +1,9 @@
+import hashlib
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class AbstractAdapter:
     """
     Class definition for the base adapter for libre-ary resource adapters.
@@ -95,18 +101,16 @@ class AbstractAdapter:
         """
         pass
 
-    @AbstractMethod
-    def prepare_store(file_metadata, dropbox_dir, current_location):
+    @staticmethod
+    def prepare_store(file_metadata, dropbox_dir,
+                      current_location, r_id, self):
 
-        
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(dropbox_dir, name)
 
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
-
-        new_name = "{}_{}".format(r_id, name)
 
         other_copies = self.metadata_man.get_copy_info(
             r_id, self.adapter_id)
@@ -118,19 +122,16 @@ class AbstractAdapter:
 
         return checksum, sha1Hashed
 
+    @staticmethod
+    def prepare_retrieve(file_metadata, dropbox_dir,
+                         current_location, r_id, self):
 
-     @AbstractMethod
-    def prepare_retrieve(file_metadata, dropbox_dir, current_location):
-
-        
         checksum = file_metadata[4]
         name = file_metadata[3]
         current_location = "{}/{}".format(dropbox_dir, name)
 
         sha1Hash = hashlib.sha1(open(current_location, "rb").read())
         sha1Hashed = sha1Hash.hexdigest()
-
-        new_name = "{}_{}".format(r_id, name)
 
         other_copies = self.metadata_man.get_copy_info(
             r_id, self.adapter_id)
