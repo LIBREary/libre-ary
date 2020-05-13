@@ -1,6 +1,6 @@
 import libreary
 from libreary import Libreary
-from libreary.adapters.BaseAdapter import BaseAdapter
+from libreary.adapters.AbstractAdapter import AbstractAdapter
 from libreary.adapters.local import LocalAdapter
 from libreary import AdapterManager
 
