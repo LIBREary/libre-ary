@@ -192,7 +192,7 @@ class SQLite3MetadataManager(object):
         :param new_levels - list of names of new levels
         """
         sql = "update resources set levels = ? where uuid=?"
-        self.cursor.execute(sql, (r_id, ",".join([l for l in new_levels])))
+        self.cursor.execute(sql, (r_id, ",".join([level for level in new_levels])))
         self.conn.commit()
 
     def summarize_copies(self, r_id: str) -> List[List[str]]:
@@ -263,7 +263,7 @@ class SQLite3MetadataManager(object):
             Can match UUID, filename, original path, or description.
         """
         search_term = "%" + search_term + "%"
-        return self.cursor.execute(f"select * from resources where name like ? or path like ? or uuid like ? or description like ?",
+        return self.cursor.execute("select * from resources where name like ? or path like ? or uuid like ? or description like ?",
                                    (search_term, search_term, search_term, search_term)).fetchall()
 
     def list_object_metadata_schema(self, r_id: str) -> List:
@@ -277,7 +277,7 @@ class SQLite3MetadataManager(object):
         """
         try:
             text_fields = self.cursor.execute(
-                f"select md_schema from object_metadata_schema where object_id=?", (r_id,)).fetchall()[0][0]
+                "select md_schema from object_metadata_schema where object_id=?", (r_id,)).fetchall()[0][0]
             return json.loads(text_fields)
         except IndexError:
             return []

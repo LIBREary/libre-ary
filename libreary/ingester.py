@@ -79,7 +79,7 @@ class Ingester:
         canonical_adapter_locator = canonical_adapter._store_canonical(
             current_file_path, obj_uuid, checksum, filename)
 
-        levels = ",".join([str(l) for l in levels])
+        levels = ",".join([str(level) for level in levels])
 
         # Ingest to db
         self.metadata_man.ingest_to_db(
